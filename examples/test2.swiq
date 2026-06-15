@@ -1,0 +1,15 @@
+log(72+1984+28-94849292*7362);
+
+set var x = 10;
+set x = x + 5;
+log(x);
+
+if (x > 10) {
+    log("x is big");
+} else {
+    log("x is small");
+}
+
+log("hello" + " " + "world");
+log(5 == 5);
+log(5 != 3);

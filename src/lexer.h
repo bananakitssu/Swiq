@@ -1,24 +1,21 @@
-// lexer.h
 #pragma once
 #include <string>
 #include <vector>
 
 enum class TokenType {
-    SET,        // "set"
-    VAR,        // "var"
-    IDENTIFIER, // x, log, etc.
-    NUMBER,     // 5, 2
-    EQUALS,     // =
-    PLUS,       // +
-    LPAREN,     // (
-    RPAREN,     // )
-    SEMICOLON,  // ;
+    SET, VAR, IF, ELSE,
+    IDENTIFIER, NUMBER, STRING,
+    EQUALS, EQUALS_EQUALS, NOT_EQUALS,
+    LESS, GREATER, LESS_EQUAL, GREATER_EQUAL,
+    PLUS, MINUS, STAR, SLASH,
+    LPAREN, RPAREN, LBRACE, RBRACE,
+    SEMICOLON,
     END_OF_FILE
 };
 
 struct Token {
     TokenType type;
-    std::string value; // the actual text, e.g. "x" or "5"
+    std::string value;
 };
 
 class Lexer {
@@ -31,10 +28,12 @@ private:
     size_t pos = 0;
 
     char current() const;
+    char peek() const; // look one char ahead
     void advance();
     bool isAtEnd() const;
 
     Token readNumber();
     Token readIdentifierOrKeyword();
+    Token readString();
     void skipWhitespace();
 };
