@@ -197,11 +197,25 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
                                   std::to_string(args.size()));
     }
 
-    // Functions run in a fresh, isolated scope (parameters only — no access to
-    // outer variables). Save the caller's scope and restore it afterward,
-    // however the function exits (normal return or exception).
+    // Functions run in a fresh, isolated scope. Only parameters and any
+    // explicitly listed [captures] are visible — everything else from the
+    // outer scope is invisible by default.
     auto savedVars = std::move(variables);
     variables = std::unordered_map<std::string, Value>();
+
+    // Bring in captured variables by their current value.
+    for (const auto& name : func->captures) {
+        auto it = savedVars.find(name);
+        if (it == savedVars.end()) {
+            variables = std::move(savedVars); // restore before throwing
+            throw std::runtime_error("Interpreter error at line " + std::to_string(callLine) +
+                                      ": function '" + func->name + "' captures undefined variable '" +
+                                      name + "'");
+        }
+        variables[name] = it->second;
+    }
+
+    // Bind parameters (params take priority if a name overlaps a capture).
     for (size_t i = 0; i < func->params.size(); i++) {
         variables[func->params[i]] = args[i];
     }
@@ -209,13 +223,18 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
     Value result;
     try {
         executeBlock(func->body);
-        // No explicit return statement was hit; default return value.
-        result = Value();
+        result = Value(); // no explicit return statement was hit
     } catch (ReturnSignal& r) {
         result = r.value;
     } catch (...) {
         variables = std::move(savedVars);
         throw;
+    }
+
+    // Write captured variables' final values back to the outer scope —
+    // this is what makes them behave like real (if limited) closures.
+    for (const auto& name : func->captures) {
+        savedVars[name] = variables[name];
     }
 
     variables = std::move(savedVars);

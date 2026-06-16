@@ -154,14 +154,22 @@ struct ForStmt : Stmt {
           post(std::move(post)), body(std::move(body)) {}
 };
 
-// func name(params) { body }
+// func name(params)[captures] { body }
+// `captures` lists outer variables this function is allowed to see.
+// They're passed in by current value when the function is called, and
+// written back to the outer scope when the function returns — so they
+// behave like simple two-way closures, but only for names explicitly
+// listed. Anything not listed is invisible to the function body.
 struct FuncDeclStmt : Stmt {
     std::string name;
     std::vector<std::string> params;
+    std::vector<std::string> captures;
     std::vector<std::unique_ptr<Stmt>> body;
 
-    FuncDeclStmt(std::string name, std::vector<std::string> params, std::vector<std::unique_ptr<Stmt>> body)
-        : name(std::move(name)), params(std::move(params)), body(std::move(body)) {}
+    FuncDeclStmt(std::string name, std::vector<std::string> params,
+                 std::vector<std::string> captures, std::vector<std::unique_ptr<Stmt>> body)
+        : name(std::move(name)), params(std::move(params)),
+          captures(std::move(captures)), body(std::move(body)) {}
 };
 
 // return [<expr>];

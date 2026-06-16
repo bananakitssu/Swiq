@@ -192,7 +192,7 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
     return std::make_unique<ForStmt>(std::move(init), std::move(condition), std::move(post), std::move(body));
 }
 
-// func name(params) { body }
+// func name(params)[captures] { body }
 std::unique_ptr<Stmt> Parser::parseFuncDecl() {
     expect(TokenType::FUNC, "expected 'func'");
     Token name = expect(TokenType::IDENTIFIER, "expected function name");
@@ -208,8 +208,21 @@ std::unique_ptr<Stmt> Parser::parseFuncDecl() {
     }
     expect(TokenType::RPAREN, "expected ')'");
 
+    std::vector<std::string> captures;
+    if (check(TokenType::LBRACKET)) {
+        advance();
+        if (!check(TokenType::RBRACKET)) {
+            captures.push_back(expect(TokenType::IDENTIFIER, "expected captured variable name").value);
+            while (check(TokenType::COMMA)) {
+                advance();
+                captures.push_back(expect(TokenType::IDENTIFIER, "expected captured variable name").value);
+            }
+        }
+        expect(TokenType::RBRACKET, "expected ']'");
+    }
+
     auto body = parseBlock();
-    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(body));
+    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body));
 }
 
 // return [<expr>];

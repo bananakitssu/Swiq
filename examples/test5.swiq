@@ -1,0 +1,45 @@
+// Basic two-way closure: increment a captured counter
+set var counter = 0;
+
+func increment()[counter] {
+    set counter = counter + 1;
+    return counter;
+}
+
+log(increment());
+log(increment());
+log(increment());
+log(counter); // should reflect the writes made inside the function
+
+// String capture, read-only usage
+set var greeting = "Hello";
+func greet(name)[greeting] {
+    return greeting + ", " + name + "!";
+}
+log(greet("World"));
+
+// Captured accumulator combined with a parameter
+set var total = 0;
+func addToTotal(n)[total] {
+    set total = total + n;
+    return total;
+}
+log(addToTotal(5));
+log(addToTotal(10));
+log(total);
+
+// Functions with NO captures still can't see outer scope (regression check)
+func noCapture(x) {
+    return x * 2;
+}
+log(noCapture(21));
+
+// Array capture: arrays already have reference semantics, so even without
+// captures the underlying array contents would be shared IF passed as a
+// param -- but here we test capturing the array variable itself.
+set var sharedArr = [1, 2, 3];
+func appendOne()[sharedArr] {
+    push(sharedArr, 99);
+}
+appendOne();
+log(sharedArr);
