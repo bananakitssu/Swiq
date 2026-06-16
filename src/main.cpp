@@ -1,4 +1,3 @@
-// main.cpp
 #include "lexer.h"
 #include "parser.h"
 #include "interpreter.h"
@@ -9,12 +8,20 @@
 int main(int argc, char* argv[]) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " <source-file>" << std::endl;
+        std::cerr << "       " << argv[0] << " -v   (show version info)" << std::endl;
         return 1;
     }
 
-    std::ifstream file(argv[1]);
+    std::string filepath = argv[1];
+
+    // "-v" runs the built-in version script instead of a user file
+    if (filepath == "-v") {
+        filepath = "../private_apis/version.swiq";
+    }
+
+    std::ifstream file(filepath);
     if (!file) {
-        std::cerr << "Could not open file: " << argv[1] << std::endl;
+        std::cerr << "Could not open file: " << filepath << std::endl;
         return 1;
     }
 

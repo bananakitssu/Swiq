@@ -1,0 +1,1 @@
+log("Swiq v" + Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__ + " (" + Swiq.__ENV__.__VERSION__.__BUILD_YEAR__ + ")");
