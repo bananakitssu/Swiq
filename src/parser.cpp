@@ -7,9 +7,14 @@ Token Parser::current() const {
     return tokens[pos];
 }
 
+Token Parser::peekAt(int offset) const {
+    size_t idx = pos + offset;
+    if (idx >= tokens.size()) return tokens.back();
+    return tokens[idx];
+}
+
 Token Parser::peekNext() const {
-    if (pos + 1 < tokens.size()) return tokens[pos + 1];
-    return tokens.back();
+    return peekAt(1);
 }
 
 Token Parser::advance() {
@@ -39,8 +44,11 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse() {
 
 std::unique_ptr<Stmt> Parser::parseStatement() {
     if (check(TokenType::SET)) {
-        if (peekNext().type == TokenType::VAR) {
+        if (peekAt(1).type == TokenType::VAR) {
             return parseVarDecl();
+        }
+        if (peekAt(1).type == TokenType::IDENTIFIER && peekAt(2).type == TokenType::LBRACKET) {
+            return parseIndexAssign();
         }
         return parseAssign();
     }
@@ -53,8 +61,27 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
         return parseWhileStmt();
     }
 
+    if (check(TokenType::FOR)) {
+        return parseForStmt();
+    }
+
+    if (check(TokenType::FUNC)) {
+        return parseFuncDecl();
+    }
+
+    if (check(TokenType::RETURN)) {
+        return parseReturnStmt();
+    }
+
     if (check(TokenType::IDENTIFIER) && current().value == "log") {
         return parseLogStmt();
+    }
+
+    // Generic function/builtin call used as a statement, e.g. push(arr, 5);
+    if (check(TokenType::IDENTIFIER) && peekAt(1).type == TokenType::LPAREN) {
+        auto expr = parseExpr();
+        expect(TokenType::SEMICOLON, "expected ';'");
+        return std::make_unique<ExprStmt>(std::move(expr));
     }
 
     throw std::runtime_error("Parse error at line " + std::to_string(current().line) +
@@ -80,6 +107,29 @@ std::unique_ptr<Stmt> Parser::parseAssign() {
     auto value = parseExpr();
     expect(TokenType::SEMICOLON, "expected ';'");
     return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line);
+}
+
+// Used only inside `for (...; ...; set i = i + 1)` — same as parseAssign but no trailing ';'
+std::unique_ptr<Stmt> Parser::parseAssignNoSemicolon() {
+    Token setTok = expect(TokenType::SET, "expected 'set'");
+    Token name = expect(TokenType::IDENTIFIER, "expected variable name");
+    expect(TokenType::EQUALS, "expected '='");
+    auto value = parseExpr();
+    return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line);
+}
+
+// set arr[index] = <expr>;
+std::unique_ptr<Stmt> Parser::parseIndexAssign() {
+    Token setTok = expect(TokenType::SET, "expected 'set'");
+    Token name = expect(TokenType::IDENTIFIER, "expected array name");
+    auto arrayExpr = std::make_unique<VariableExpr>(name.value, name.line);
+    expect(TokenType::LBRACKET, "expected '['");
+    auto indexExpr = parseExpr();
+    expect(TokenType::RBRACKET, "expected ']'");
+    expect(TokenType::EQUALS, "expected '='");
+    auto value = parseExpr();
+    expect(TokenType::SEMICOLON, "expected ';'");
+    return std::make_unique<IndexAssignStmt>(std::move(arrayExpr), std::move(indexExpr), std::move(value), setTok.line);
 }
 
 // log(<expr>);
@@ -117,6 +167,60 @@ std::unique_ptr<Stmt> Parser::parseWhileStmt() {
     expect(TokenType::RPAREN, "expected ')'");
     auto body = parseBlock();
     return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
+}
+
+// for (set var i = 0; i < 5; set i = i + 1) { ... }
+std::unique_ptr<Stmt> Parser::parseForStmt() {
+    expect(TokenType::FOR, "expected 'for'");
+    expect(TokenType::LPAREN, "expected '('");
+
+    std::unique_ptr<Stmt> init;
+    if (peekAt(1).type == TokenType::VAR) {
+        init = parseVarDecl(); // consumes its own ';'
+    } else {
+        init = parseAssign();  // consumes its own ';'
+    }
+
+    auto condition = parseExpr();
+    expect(TokenType::SEMICOLON, "expected ';' after for-loop condition");
+
+    auto post = parseAssignNoSemicolon();
+
+    expect(TokenType::RPAREN, "expected ')'");
+    auto body = parseBlock();
+
+    return std::make_unique<ForStmt>(std::move(init), std::move(condition), std::move(post), std::move(body));
+}
+
+// func name(params) { body }
+std::unique_ptr<Stmt> Parser::parseFuncDecl() {
+    expect(TokenType::FUNC, "expected 'func'");
+    Token name = expect(TokenType::IDENTIFIER, "expected function name");
+    expect(TokenType::LPAREN, "expected '('");
+
+    std::vector<std::string> params;
+    if (!check(TokenType::RPAREN)) {
+        params.push_back(expect(TokenType::IDENTIFIER, "expected parameter name").value);
+        while (check(TokenType::COMMA)) {
+            advance();
+            params.push_back(expect(TokenType::IDENTIFIER, "expected parameter name").value);
+        }
+    }
+    expect(TokenType::RPAREN, "expected ')'");
+
+    auto body = parseBlock();
+    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(body));
+}
+
+// return [<expr>];
+std::unique_ptr<Stmt> Parser::parseReturnStmt() {
+    Token retTok = expect(TokenType::RETURN, "expected 'return'");
+    std::unique_ptr<Expr> value;
+    if (!check(TokenType::SEMICOLON)) {
+        value = parseExpr();
+    }
+    expect(TokenType::SEMICOLON, "expected ';'");
+    return std::make_unique<ReturnStmt>(std::move(value), retTok.line);
 }
 
 std::vector<std::unique_ptr<Stmt>> Parser::parseBlock() {
@@ -174,13 +278,22 @@ std::unique_ptr<Expr> Parser::parseMultiplicative() {
     return left;
 }
 
-// Handles member access: expr.identifier.identifier...
+// Handles member access (a.b) and indexing (a[b]), chainable: a.b[0].c
 std::unique_ptr<Expr> Parser::parsePostfix() {
     auto expr = parsePrimary();
-    while (check(TokenType::DOT)) {
-        Token dotTok = advance();
-        Token prop = expect(TokenType::IDENTIFIER, "expected property name after '.'");
-        expr = std::make_unique<MemberExpr>(std::move(expr), prop.value, dotTok.line);
+    while (true) {
+        if (check(TokenType::DOT)) {
+            Token dotTok = advance();
+            Token prop = expect(TokenType::IDENTIFIER, "expected property name after '.'");
+            expr = std::make_unique<MemberExpr>(std::move(expr), prop.value, dotTok.line);
+        } else if (check(TokenType::LBRACKET)) {
+            Token brTok = advance();
+            auto indexExpr = parseExpr();
+            expect(TokenType::RBRACKET, "expected ']'");
+            expr = std::make_unique<IndexExpr>(std::move(expr), std::move(indexExpr), brTok.line);
+        } else {
+            break;
+        }
     }
     return expr;
 }
@@ -206,8 +319,35 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
         return std::make_unique<BoolExpr>(false);
     }
 
+    if (check(TokenType::LBRACKET)) {
+        advance(); // consume '['
+        std::vector<std::unique_ptr<Expr>> elements;
+        if (!check(TokenType::RBRACKET)) {
+            elements.push_back(parseExpr());
+            while (check(TokenType::COMMA)) {
+                advance();
+                elements.push_back(parseExpr());
+            }
+        }
+        expect(TokenType::RBRACKET, "expected ']'");
+        return std::make_unique<ArrayExpr>(std::move(elements));
+    }
+
     if (check(TokenType::IDENTIFIER)) {
         Token tok = advance();
+        if (check(TokenType::LPAREN)) {
+            advance(); // consume '('
+            std::vector<std::unique_ptr<Expr>> args;
+            if (!check(TokenType::RPAREN)) {
+                args.push_back(parseExpr());
+                while (check(TokenType::COMMA)) {
+                    advance();
+                    args.push_back(parseExpr());
+                }
+            }
+            expect(TokenType::RPAREN, "expected ')'");
+            return std::make_unique<CallExpr>(tok.value, std::move(args), tok.line);
+        }
         return std::make_unique<VariableExpr>(tok.value, tok.line);
     }
 

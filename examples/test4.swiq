@@ -1,0 +1,56 @@
+// Functions
+func add(a, b) {
+    return a + b;
+}
+
+func factorial(n) {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+log(add(3, 4));
+log(factorial(5));
+
+// Arrays
+set var arr = [10, 20, 30, 40, 50];
+log(arr[0]);
+log(arr);
+
+set arr[0] = 99;
+log(arr[0]);
+
+log(len(arr));
+push(arr, 60);
+log(len(arr));
+log(arr);
+
+// For loop summing an array
+set var sum = 0;
+for (set var i = 0; i < len(arr); set i = i + 1) {
+    set sum = sum + arr[i];
+}
+log(sum);
+
+// Nested: function that builds and returns an array
+func makeRange(n) {
+    set var result = [];
+    for (set var i = 0; i < n; set i = i + 1) {
+        push(result, i);
+    }
+    return result;
+}
+
+log(makeRange(5));
+
+// Function calling another function, recursion + array combo
+func sumArray(a) {
+    set var total = 0;
+    for (set var i = 0; i < len(a); set i = i + 1) {
+        set total = total + a[i];
+    }
+    return total;
+}
+
+log(sumArray(makeRange(10)));

@@ -48,6 +48,32 @@ struct MemberExpr : Expr {
         : object(std::move(object)), property(std::move(property)), line(line) {}
 };
 
+// [expr, expr, expr, ...]
+struct ArrayExpr : Expr {
+    std::vector<std::unique_ptr<Expr>> elements;
+    explicit ArrayExpr(std::vector<std::unique_ptr<Expr>> elements) : elements(std::move(elements)) {}
+};
+
+// array[index]
+struct IndexExpr : Expr {
+    std::unique_ptr<Expr> array;
+    std::unique_ptr<Expr> index;
+    int line;
+
+    IndexExpr(std::unique_ptr<Expr> array, std::unique_ptr<Expr> index, int line)
+        : array(std::move(array)), index(std::move(index)), line(line) {}
+};
+
+// name(arg, arg, ...)
+struct CallExpr : Expr {
+    std::string callee;
+    std::vector<std::unique_ptr<Expr>> args;
+    int line;
+
+    CallExpr(std::string callee, std::vector<std::unique_ptr<Expr>> args, int line)
+        : callee(std::move(callee)), args(std::move(args)), line(line) {}
+};
+
 struct Stmt {
     virtual ~Stmt() = default;
 };
@@ -69,10 +95,27 @@ struct AssignStmt : Stmt {
         : name(std::move(name)), value(std::move(value)), line(line) {}
 };
 
+// set arr[index] = <expr>;
+struct IndexAssignStmt : Stmt {
+    std::unique_ptr<Expr> array;
+    std::unique_ptr<Expr> index;
+    std::unique_ptr<Expr> value;
+    int line;
+
+    IndexAssignStmt(std::unique_ptr<Expr> array, std::unique_ptr<Expr> index, std::unique_ptr<Expr> value, int line)
+        : array(std::move(array)), index(std::move(index)), value(std::move(value)), line(line) {}
+};
+
 // log(<expr>);
 struct LogStmt : Stmt {
     std::unique_ptr<Expr> value;
     explicit LogStmt(std::unique_ptr<Expr> value) : value(std::move(value)) {}
+};
+
+// A bare expression used as a statement, e.g. calling a function for its side effects: push(arr, 5);
+struct ExprStmt : Stmt {
+    std::unique_ptr<Expr> expr;
+    explicit ExprStmt(std::unique_ptr<Expr> expr) : expr(std::move(expr)) {}
 };
 
 // if (<cond>) { ... } [else { ... }]
@@ -96,4 +139,35 @@ struct WhileStmt : Stmt {
 
     WhileStmt(std::unique_ptr<Expr> condition, std::vector<std::unique_ptr<Stmt>> body)
         : condition(std::move(condition)), body(std::move(body)) {}
+};
+
+// for (init; condition; post) { body }
+struct ForStmt : Stmt {
+    std::unique_ptr<Stmt> init;       // e.g. "set var i = 0;"
+    std::unique_ptr<Expr> condition;  // e.g. "i < 5"
+    std::unique_ptr<Stmt> post;       // e.g. "set i = i + 1"
+    std::vector<std::unique_ptr<Stmt>> body;
+
+    ForStmt(std::unique_ptr<Stmt> init, std::unique_ptr<Expr> condition,
+            std::unique_ptr<Stmt> post, std::vector<std::unique_ptr<Stmt>> body)
+        : init(std::move(init)), condition(std::move(condition)),
+          post(std::move(post)), body(std::move(body)) {}
+};
+
+// func name(params) { body }
+struct FuncDeclStmt : Stmt {
+    std::string name;
+    std::vector<std::string> params;
+    std::vector<std::unique_ptr<Stmt>> body;
+
+    FuncDeclStmt(std::string name, std::vector<std::string> params, std::vector<std::unique_ptr<Stmt>> body)
+        : name(std::move(name)), params(std::move(params)), body(std::move(body)) {}
+};
+
+// return [<expr>];
+struct ReturnStmt : Stmt {
+    std::unique_ptr<Expr> value; // nullptr if bare "return;"
+    int line;
+
+    ReturnStmt(std::unique_ptr<Expr> value, int line) : value(std::move(value)), line(line) {}
 };

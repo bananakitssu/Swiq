@@ -15,6 +15,7 @@ private:
     size_t pos = 0;
 
     Token current() const;
+    Token peekAt(int offset) const;
     Token peekNext() const;
     Token advance();
     bool check(TokenType type) const;
@@ -23,9 +24,14 @@ private:
     std::unique_ptr<Stmt> parseStatement();
     std::unique_ptr<Stmt> parseVarDecl();
     std::unique_ptr<Stmt> parseAssign();
+    std::unique_ptr<Stmt> parseIndexAssign();
+    std::unique_ptr<Stmt> parseAssignNoSemicolon(); // for "for" loop post-clause
     std::unique_ptr<Stmt> parseLogStmt();
     std::unique_ptr<Stmt> parseIfStmt();
     std::unique_ptr<Stmt> parseWhileStmt();
+    std::unique_ptr<Stmt> parseForStmt();
+    std::unique_ptr<Stmt> parseFuncDecl();
+    std::unique_ptr<Stmt> parseReturnStmt();
     std::vector<std::unique_ptr<Stmt>> parseBlock();
 
     std::unique_ptr<Expr> parseExpr();
