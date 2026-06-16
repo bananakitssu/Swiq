@@ -21,7 +21,8 @@ void Interpreter::execute(const Stmt* stmt) {
     if (auto assign = dynamic_cast<const AssignStmt*>(stmt)) {
         if (variables.find(assign->name) == variables.end()) {
             throw std::runtime_error(
-                "Interpreter error: cannot assign to undeclared variable '" + assign->name +
+                "Interpreter error at line " + std::to_string(assign->line) +
+                ": cannot assign to undeclared variable '" + assign->name +
                 "'. Use 'set var' to declare it first.");
         }
         variables[assign->name] = evaluate(assign->value.get());
@@ -39,6 +40,13 @@ void Interpreter::execute(const Stmt* stmt) {
             executeBlock(ifStmt->thenBranch);
         } else {
             executeBlock(ifStmt->elseBranch);
+        }
+        return;
+    }
+
+    if (auto whileStmt = dynamic_cast<const WhileStmt*>(stmt)) {
+        while (isTruthy(evaluate(whileStmt->condition.get()))) {
+            executeBlock(whileStmt->body);
         }
         return;
     }
@@ -63,6 +71,17 @@ void Interpreter::printValue(const Value& value) {
     }
 }
 
+// Builds a dotted path string like "Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__"
+std::string Interpreter::getMemberPath(const Expr* expr) {
+    if (auto var = dynamic_cast<const VariableExpr*>(expr)) {
+        return var->name;
+    }
+    if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
+        return getMemberPath(mem->object.get()) + "." + mem->property;
+    }
+    throw std::runtime_error("Interpreter error: invalid member access expression");
+}
+
 Value Interpreter::evaluate(const Expr* expr) {
     if (auto num = dynamic_cast<const NumberExpr*>(expr)) {
         return num->value;
@@ -72,12 +91,38 @@ Value Interpreter::evaluate(const Expr* expr) {
         return str->value;
     }
 
+    if (auto boolean = dynamic_cast<const BoolExpr*>(expr)) {
+        return boolean->value;
+    }
+
     if (auto var = dynamic_cast<const VariableExpr*>(expr)) {
         auto it = variables.find(var->name);
         if (it == variables.end()) {
-            throw std::runtime_error("Interpreter error: undefined variable '" + var->name + "'");
+            throw std::runtime_error("Interpreter error at line " + std::to_string(var->line) +
+                                      ": undefined variable '" + var->name + "'");
         }
         return it->second;
+    }
+
+    if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
+        std::string path = getMemberPath(mem);
+
+        // Read-only built-in environment values.
+        // Not stored in `variables`, so they can never be assigned to —
+        // the grammar for 'set' only allows a plain identifier on the left,
+        // never a dotted path.
+        static const std::unordered_map<std::string, Value> envMap = {
+            {"Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__", (long long)1},
+            {"Swiq.__ENV__.__VERSION__.__BUILD_YEAR__", (long long)2026},
+        };
+
+        auto it = envMap.find(path);
+        if (it != envMap.end()) {
+            return it->second;
+        }
+
+        throw std::runtime_error("Interpreter error at line " + std::to_string(mem->line) +
+                                  ": unknown or inaccessible property '" + path + "'");
     }
 
     if (auto bin = dynamic_cast<const BinaryExpr*>(expr)) {
@@ -114,7 +159,8 @@ Value Interpreter::evaluate(const Expr* expr) {
 
         // Everything else (+, -, *, /, <, >, <=, >=) requires numbers
         if (!std::holds_alternative<long long>(left) || !std::holds_alternative<long long>(right)) {
-            throw std::runtime_error("Interpreter error: operator '" + op + "' requires numbers");
+            throw std::runtime_error("Interpreter error at line " + std::to_string(bin->line) +
+                                      ": operator '" + op + "' requires numbers");
         }
 
         long long l = std::get<long long>(left);
@@ -124,7 +170,8 @@ Value Interpreter::evaluate(const Expr* expr) {
         if (op == "-") return l - r;
         if (op == "*") return l * r;
         if (op == "/") {
-            if (r == 0) throw std::runtime_error("Interpreter error: division by zero");
+            if (r == 0) throw std::runtime_error("Interpreter error at line " + std::to_string(bin->line) +
+                                                   ": division by zero");
             return l / r;
         }
         if (op == "<")  return l < r;
@@ -132,7 +179,8 @@ Value Interpreter::evaluate(const Expr* expr) {
         if (op == "<=") return l <= r;
         if (op == ">=") return l >= r;
 
-        throw std::runtime_error("Interpreter error: unknown operator '" + op + "'");
+        throw std::runtime_error("Interpreter error at line " + std::to_string(bin->line) +
+                                  ": unknown operator '" + op + "'");
     }
 
     throw std::runtime_error("Interpreter error: unknown expression type");

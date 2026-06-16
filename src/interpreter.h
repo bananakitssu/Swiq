@@ -20,4 +20,5 @@ private:
     Value evaluate(const Expr* expr);
     bool isTruthy(const Value& value);
     void printValue(const Value& value);
+    std::string getMemberPath(const Expr* expr);
 };

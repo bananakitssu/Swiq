@@ -14,6 +14,7 @@ char Lexer::peek() const {
 }
 
 void Lexer::advance() {
+    if (current() == '\n') line++;
     pos++;
 }
 
@@ -24,6 +25,20 @@ bool Lexer::isAtEnd() const {
 void Lexer::skipWhitespace() {
     while (!isAtEnd() && std::isspace(current())) {
         advance();
+    }
+}
+
+void Lexer::skipComment() {
+    // '#' or '//' line comments
+    if (current() == '#' || (current() == '/' && peek() == '/')) {
+        while (!isAtEnd() && current() != '\n') advance();
+        return;
+    }
+    // '/* ... */' block comments
+    if (current() == '/' && peek() == '*') {
+        advance(); advance(); // consume /*
+        while (!isAtEnd() && !(current() == '*' && peek() == '/')) advance();
+        if (!isAtEnd()) { advance(); advance(); } // consume */
     }
 }
 
@@ -47,6 +62,9 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "var") return Token{TokenType::VAR, value};
     if (value == "if") return Token{TokenType::IF, value};
     if (value == "else") return Token{TokenType::ELSE, value};
+    if (value == "while") return Token{TokenType::WHILE, value};
+    if (value == "true") return Token{TokenType::TRUE, value};
+    if (value == "false") return Token{TokenType::FALSE, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }
@@ -65,62 +83,70 @@ Token Lexer::readString() {
 std::vector<Token> Lexer::tokenize() {
     std::vector<Token> tokens;
 
-    while (!isAtEnd()) {
+    while (true) {
         skipWhitespace();
+
+        // Skip any sequence of comments/whitespace
+        while (!isAtEnd() && (current() == '#' ||
+               (current() == '/' && (peek() == '/' || peek() == '*')))) {
+            skipComment();
+            skipWhitespace();
+        }
+
         if (isAtEnd()) break;
 
+        int tokLine = line;
         char c = current();
+        Token tok;
 
         if (std::isdigit(c)) {
-            tokens.push_back(readNumber());
-            continue;
+            tok = readNumber();
+        } else if (std::isalpha(c) || c == '_') {
+            tok = readIdentifierOrKeyword();
+        } else if (c == '"') {
+            tok = readString();
+        } else {
+            switch (c) {
+                case '=':
+                    advance();
+                    if (current() == '=') { advance(); tok = {TokenType::EQUALS_EQUALS, "=="}; }
+                    else tok = {TokenType::EQUALS, "="};
+                    break;
+                case '!':
+                    advance();
+                    if (current() == '=') { advance(); tok = {TokenType::NOT_EQUALS, "!="}; }
+                    else tok = {TokenType::END_OF_FILE, ""}; // unsupported '!' alone, ignore
+                    break;
+                case '<':
+                    advance();
+                    if (current() == '=') { advance(); tok = {TokenType::LESS_EQUAL, "<="}; }
+                    else tok = {TokenType::LESS, "<"};
+                    break;
+                case '>':
+                    advance();
+                    if (current() == '=') { advance(); tok = {TokenType::GREATER_EQUAL, ">="}; }
+                    else tok = {TokenType::GREATER, ">"};
+                    break;
+                case '+': tok = {TokenType::PLUS, "+"}; advance(); break;
+                case '-': tok = {TokenType::MINUS, "-"}; advance(); break;
+                case '*': tok = {TokenType::STAR, "*"}; advance(); break;
+                case '/': tok = {TokenType::SLASH, "/"}; advance(); break;
+                case '.': tok = {TokenType::DOT, "."}; advance(); break;
+                case '(': tok = {TokenType::LPAREN, "("}; advance(); break;
+                case ')': tok = {TokenType::RPAREN, ")"}; advance(); break;
+                case '{': tok = {TokenType::LBRACE, "{"}; advance(); break;
+                case '}': tok = {TokenType::RBRACE, "}"}; advance(); break;
+                case ';': tok = {TokenType::SEMICOLON, ";"}; advance(); break;
+                default:
+                    advance();
+                    continue; // skip unknown char entirely, no token
+            }
         }
 
-        if (std::isalpha(c) || c == '_') {
-            tokens.push_back(readIdentifierOrKeyword());
-            continue;
-        }
-
-        if (c == '"') {
-            tokens.push_back(readString());
-            continue;
-        }
-
-        switch (c) {
-            case '=':
-                advance();
-                if (current() == '=') { advance(); tokens.push_back({TokenType::EQUALS_EQUALS, "=="}); }
-                else tokens.push_back({TokenType::EQUALS, "="});
-                break;
-            case '!':
-                advance();
-                if (current() == '=') { advance(); tokens.push_back({TokenType::NOT_EQUALS, "!="}); }
-                break;
-            case '<':
-                advance();
-                if (current() == '=') { advance(); tokens.push_back({TokenType::LESS_EQUAL, "<="}); }
-                else tokens.push_back({TokenType::LESS, "<"});
-                break;
-            case '>':
-                advance();
-                if (current() == '=') { advance(); tokens.push_back({TokenType::GREATER_EQUAL, ">="}); }
-                else tokens.push_back({TokenType::GREATER, ">"});
-                break;
-            case '+': tokens.push_back({TokenType::PLUS, "+"}); advance(); break;
-            case '-': tokens.push_back({TokenType::MINUS, "-"}); advance(); break;
-            case '*': tokens.push_back({TokenType::STAR, "*"}); advance(); break;
-            case '/': tokens.push_back({TokenType::SLASH, "/"}); advance(); break;
-            case '(': tokens.push_back({TokenType::LPAREN, "("}); advance(); break;
-            case ')': tokens.push_back({TokenType::RPAREN, ")"}); advance(); break;
-            case '{': tokens.push_back({TokenType::LBRACE, "{"}); advance(); break;
-            case '}': tokens.push_back({TokenType::RBRACE, "}"}); advance(); break;
-            case ';': tokens.push_back({TokenType::SEMICOLON, ";"}); advance(); break;
-            default:
-                advance();
-                break;
-        }
+        tok.line = tokLine;
+        tokens.push_back(tok);
     }
 
-    tokens.push_back({TokenType::END_OF_FILE, ""});
+    tokens.push_back({TokenType::END_OF_FILE, "", line});
     return tokens;
 }

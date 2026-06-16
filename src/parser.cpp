@@ -24,7 +24,7 @@ bool Parser::check(TokenType type) const {
 
 Token Parser::expect(TokenType type, const std::string& errorMsg) {
     if (!check(type)) {
-        throw std::runtime_error("Parse error: " + errorMsg);
+        throw std::runtime_error("Parse error at line " + std::to_string(current().line) + ": " + errorMsg);
     }
     return advance();
 }
@@ -49,11 +49,16 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
         return parseIfStmt();
     }
 
+    if (check(TokenType::WHILE)) {
+        return parseWhileStmt();
+    }
+
     if (check(TokenType::IDENTIFIER) && current().value == "log") {
         return parseLogStmt();
     }
 
-    throw std::runtime_error("Parse error: unexpected token '" + current().value + "'");
+    throw std::runtime_error("Parse error at line " + std::to_string(current().line) +
+                              ": unexpected token '" + current().value + "'");
 }
 
 // set var x = <expr>;
@@ -69,12 +74,12 @@ std::unique_ptr<Stmt> Parser::parseVarDecl() {
 
 // set x = <expr>;
 std::unique_ptr<Stmt> Parser::parseAssign() {
-    expect(TokenType::SET, "expected 'set'");
+    Token setTok = expect(TokenType::SET, "expected 'set'");
     Token name = expect(TokenType::IDENTIFIER, "expected variable name");
     expect(TokenType::EQUALS, "expected '='");
     auto value = parseExpr();
     expect(TokenType::SEMICOLON, "expected ';'");
-    return std::make_unique<AssignStmt>(name.value, std::move(value));
+    return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line);
 }
 
 // log(<expr>);
@@ -104,6 +109,16 @@ std::unique_ptr<Stmt> Parser::parseIfStmt() {
     return std::make_unique<IfStmt>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
 }
 
+// while (<cond>) { ... }
+std::unique_ptr<Stmt> Parser::parseWhileStmt() {
+    expect(TokenType::WHILE, "expected 'while'");
+    expect(TokenType::LPAREN, "expected '('");
+    auto condition = parseExpr();
+    expect(TokenType::RPAREN, "expected ')'");
+    auto body = parseBlock();
+    return std::make_unique<WhileStmt>(std::move(condition), std::move(body));
+}
+
 std::vector<std::unique_ptr<Stmt>> Parser::parseBlock() {
     expect(TokenType::LBRACE, "expected '{'");
     std::vector<std::unique_ptr<Stmt>> statements;
@@ -114,7 +129,6 @@ std::vector<std::unique_ptr<Stmt>> Parser::parseBlock() {
     return statements;
 }
 
-// Precedence (low to high): equality -> comparison -> additive -> multiplicative -> primary
 std::unique_ptr<Expr> Parser::parseExpr() {
     return parseEquality();
 }
@@ -122,9 +136,9 @@ std::unique_ptr<Expr> Parser::parseExpr() {
 std::unique_ptr<Expr> Parser::parseEquality() {
     auto left = parseComparison();
     while (check(TokenType::EQUALS_EQUALS) || check(TokenType::NOT_EQUALS)) {
-        std::string op = advance().value;
+        Token opTok = advance();
         auto right = parseComparison();
-        left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+        left = std::make_unique<BinaryExpr>(std::move(left), opTok.value, std::move(right), opTok.line);
     }
     return left;
 }
@@ -133,9 +147,9 @@ std::unique_ptr<Expr> Parser::parseComparison() {
     auto left = parseAdditive();
     while (check(TokenType::LESS) || check(TokenType::GREATER) ||
            check(TokenType::LESS_EQUAL) || check(TokenType::GREATER_EQUAL)) {
-        std::string op = advance().value;
+        Token opTok = advance();
         auto right = parseAdditive();
-        left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+        left = std::make_unique<BinaryExpr>(std::move(left), opTok.value, std::move(right), opTok.line);
     }
     return left;
 }
@@ -143,21 +157,32 @@ std::unique_ptr<Expr> Parser::parseComparison() {
 std::unique_ptr<Expr> Parser::parseAdditive() {
     auto left = parseMultiplicative();
     while (check(TokenType::PLUS) || check(TokenType::MINUS)) {
-        std::string op = advance().value;
+        Token opTok = advance();
         auto right = parseMultiplicative();
-        left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+        left = std::make_unique<BinaryExpr>(std::move(left), opTok.value, std::move(right), opTok.line);
     }
     return left;
 }
 
 std::unique_ptr<Expr> Parser::parseMultiplicative() {
-    auto left = parsePrimary();
+    auto left = parsePostfix();
     while (check(TokenType::STAR) || check(TokenType::SLASH)) {
-        std::string op = advance().value;
-        auto right = parsePrimary();
-        left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+        Token opTok = advance();
+        auto right = parsePostfix();
+        left = std::make_unique<BinaryExpr>(std::move(left), opTok.value, std::move(right), opTok.line);
     }
     return left;
+}
+
+// Handles member access: expr.identifier.identifier...
+std::unique_ptr<Expr> Parser::parsePostfix() {
+    auto expr = parsePrimary();
+    while (check(TokenType::DOT)) {
+        Token dotTok = advance();
+        Token prop = expect(TokenType::IDENTIFIER, "expected property name after '.'");
+        expr = std::make_unique<MemberExpr>(std::move(expr), prop.value, dotTok.line);
+    }
+    return expr;
 }
 
 std::unique_ptr<Expr> Parser::parsePrimary() {
@@ -171,9 +196,19 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
         return std::make_unique<StringExpr>(tok.value);
     }
 
+    if (check(TokenType::TRUE)) {
+        advance();
+        return std::make_unique<BoolExpr>(true);
+    }
+
+    if (check(TokenType::FALSE)) {
+        advance();
+        return std::make_unique<BoolExpr>(false);
+    }
+
     if (check(TokenType::IDENTIFIER)) {
         Token tok = advance();
-        return std::make_unique<VariableExpr>(tok.value);
+        return std::make_unique<VariableExpr>(tok.value, tok.line);
     }
 
     if (check(TokenType::LPAREN)) {
@@ -183,5 +218,6 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
         return expr;
     }
 
-    throw std::runtime_error("Parse error: expected expression, got '" + current().value + "'");
+    throw std::runtime_error("Parse error at line " + std::to_string(current().line) +
+                              ": expected expression, got '" + current().value + "'");
 }

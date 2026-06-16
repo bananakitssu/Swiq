@@ -3,11 +3,12 @@
 #include <vector>
 
 enum class TokenType {
-    SET, VAR, IF, ELSE,
+    SET, VAR, IF, ELSE, WHILE, TRUE, FALSE,
     IDENTIFIER, NUMBER, STRING,
     EQUALS, EQUALS_EQUALS, NOT_EQUALS,
     LESS, GREATER, LESS_EQUAL, GREATER_EQUAL,
     PLUS, MINUS, STAR, SLASH,
+    DOT,
     LPAREN, RPAREN, LBRACE, RBRACE,
     SEMICOLON,
     END_OF_FILE
@@ -16,6 +17,7 @@ enum class TokenType {
 struct Token {
     TokenType type;
     std::string value;
+    int line = 1;
 };
 
 class Lexer {
@@ -26,9 +28,10 @@ public:
 private:
     std::string source;
     size_t pos = 0;
+    int line = 1;
 
     char current() const;
-    char peek() const; // look one char ahead
+    char peek() const;
     void advance();
     bool isAtEnd() const;
 
@@ -36,4 +39,5 @@ private:
     Token readIdentifierOrKeyword();
     Token readString();
     void skipWhitespace();
+    void skipComment();
 };

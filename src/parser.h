@@ -25,6 +25,7 @@ private:
     std::unique_ptr<Stmt> parseAssign();
     std::unique_ptr<Stmt> parseLogStmt();
     std::unique_ptr<Stmt> parseIfStmt();
+    std::unique_ptr<Stmt> parseWhileStmt();
     std::vector<std::unique_ptr<Stmt>> parseBlock();
 
     std::unique_ptr<Expr> parseExpr();
@@ -32,5 +33,6 @@ private:
     std::unique_ptr<Expr> parseComparison();
     std::unique_ptr<Expr> parseAdditive();
     std::unique_ptr<Expr> parseMultiplicative();
+    std::unique_ptr<Expr> parsePostfix();
     std::unique_ptr<Expr> parsePrimary();
 };
