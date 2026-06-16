@@ -65,6 +65,9 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "while") return Token{TokenType::WHILE, value};
     if (value == "true") return Token{TokenType::TRUE, value};
     if (value == "false") return Token{TokenType::FALSE, value};
+    if (value == "func") return Token{TokenType::FUNC, value};
+    if (value == "return") return Token{TokenType::RETURN, value};
+    if (value == "for") return Token{TokenType::FOR, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }
@@ -86,7 +89,6 @@ std::vector<Token> Lexer::tokenize() {
     while (true) {
         skipWhitespace();
 
-        // Skip any sequence of comments/whitespace
         while (!isAtEnd() && (current() == '#' ||
                (current() == '/' && (peek() == '/' || peek() == '*')))) {
             skipComment();
@@ -115,7 +117,7 @@ std::vector<Token> Lexer::tokenize() {
                 case '!':
                     advance();
                     if (current() == '=') { advance(); tok = {TokenType::NOT_EQUALS, "!="}; }
-                    else tok = {TokenType::END_OF_FILE, ""}; // unsupported '!' alone, ignore
+                    else continue;
                     break;
                 case '<':
                     advance();
@@ -132,14 +134,17 @@ std::vector<Token> Lexer::tokenize() {
                 case '*': tok = {TokenType::STAR, "*"}; advance(); break;
                 case '/': tok = {TokenType::SLASH, "/"}; advance(); break;
                 case '.': tok = {TokenType::DOT, "."}; advance(); break;
+                case ',': tok = {TokenType::COMMA, ","}; advance(); break;
                 case '(': tok = {TokenType::LPAREN, "("}; advance(); break;
                 case ')': tok = {TokenType::RPAREN, ")"}; advance(); break;
                 case '{': tok = {TokenType::LBRACE, "{"}; advance(); break;
                 case '}': tok = {TokenType::RBRACE, "}"}; advance(); break;
+                case '[': tok = {TokenType::LBRACKET, "["}; advance(); break;
+                case ']': tok = {TokenType::RBRACKET, "]"}; advance(); break;
                 case ';': tok = {TokenType::SEMICOLON, ";"}; advance(); break;
                 default:
                     advance();
-                    continue; // skip unknown char entirely, no token
+                    continue;
             }
         }
 
