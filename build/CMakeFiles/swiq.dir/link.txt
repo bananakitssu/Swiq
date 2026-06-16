@@ -1,0 +1,1 @@
+/data/data/com.termux/files/usr/bin/c++ -O2 -g -DNDEBUG -Xlinker --dependency-file=CMakeFiles/swiq.dir/link.d CMakeFiles/swiq.dir/src/main.cpp.o CMakeFiles/swiq.dir/src/lexer.cpp.o CMakeFiles/swiq.dir/src/parser.cpp.o CMakeFiles/swiq.dir/src/interpreter.cpp.o -o swiq

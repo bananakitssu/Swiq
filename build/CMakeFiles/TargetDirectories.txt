@@ -1,0 +1,3 @@
+/data/data/com.termux/files/home/swiq/build/CMakeFiles/swiq.dir
+/data/data/com.termux/files/home/swiq/build/CMakeFiles/edit_cache.dir
+/data/data/com.termux/files/home/swiq/build/CMakeFiles/rebuild_cache.dir
