@@ -1,5 +1,7 @@
 # Swiq
 
+<img src="assets/Swiq.svg" alt="Swiq Logo" style="border-radius: 10px; border: 2px solid #ccc; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+
 A small programming language, built from scratch in C++.
 
 ## Features
