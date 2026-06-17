@@ -2,7 +2,7 @@
 
 <div align="center">
   <kbd>
-    <img src="YOUR_IMAGE_LINK_HERE" alt="Swiq Logo" width="250">
+    <img src="assets/Swiq.svg" alt="Swiq Logo" width="250">
   </kbd>
 </div>
 
