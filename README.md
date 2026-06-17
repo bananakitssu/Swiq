@@ -1,8 +1,11 @@
 # Swiq
 
 <div align="center">
-  <img src="assets/Swiq.svg" alt="Swiq Logo" width="250" style="border-radius: 16px; border: 1px solid #e1e4e6; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);">
+  <kbd>
+    <img src="YOUR_IMAGE_LINK_HERE" alt="Swiq Logo" width="250">
+  </kbd>
 </div>
+
 
 A small programming language, built from scratch in C++.
 
