@@ -22,6 +22,11 @@ struct BoolExpr : Expr {
     explicit BoolExpr(bool value) : value(value) {}
 };
 
+// null / none / nil — all parse to this same node. They're interchangeable
+// spellings of "no value", not three different concepts.
+struct NullExpr : Expr {
+};
+
 struct VariableExpr : Expr {
     std::string name;
     int line;
@@ -36,6 +41,27 @@ struct BinaryExpr : Expr {
 
     BinaryExpr(std::unique_ptr<Expr> left, std::string op, std::unique_ptr<Expr> right, int line)
         : left(std::move(left)), op(std::move(op)), right(std::move(right)), line(line) {}
+};
+
+// A hex literal like 0x1F. Stored as raw text, not a number — it stays
+// "just text" until .ConvertToNumber() is called on it explicitly.
+struct HexExpr : Expr {
+    std::string raw;
+    explicit HexExpr(std::string raw) : raw(std::move(raw)) {}
+};
+
+// object.method(args)  (e.g. someHex.ConvertToNumber())
+// Distinct from MemberExpr: a MemberExpr is a static dotted path
+// (Swiq.__ENV__...), while a MethodCallExpr actually invokes something.
+struct MethodCallExpr : Expr {
+    std::unique_ptr<Expr> object;
+    std::string method;
+    std::vector<std::unique_ptr<Expr>> args;
+    int line;
+
+    MethodCallExpr(std::unique_ptr<Expr> object, std::string method,
+                   std::vector<std::unique_ptr<Expr>> args, int line)
+        : object(std::move(object)), method(std::move(method)), args(std::move(args)), line(line) {}
 };
 
 // object.property  (e.g. Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__)

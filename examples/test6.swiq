@@ -1,0 +1,36 @@
+// null / none / nil are all the same value
+log(null);
+log(none);
+log(nil);
+log(null == none);
+log(null == nil);
+log(null == 0);
+log(null == false);
+
+if (null) {
+    log("should not print");
+} else {
+    log("null is falsy");
+}
+
+// String concatenation with null
+log("value: " + null);
+
+// AllocatedArray: fixed-size, pre-filled with null
+set var fixed = AllocatedArray(5);
+log(fixed);
+log(len(fixed));
+
+// Indexing works within bounds
+set fixed[0] = 10;
+set fixed[4] = 50;
+log(fixed);
+log(fixed[0]);
+log(fixed[2]); // still null, never set
+
+// push() must fail on a fixed array
+func tryPush() [fixed] {
+    push(fixed, 99);
+}
+
+tryPush();

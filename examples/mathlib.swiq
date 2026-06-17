@@ -1,0 +1,9 @@
+func square(n) {
+    return n * n;
+}
+
+func greet(name) {
+    return "Hello from the imported file, " + name + "!";
+}
+
+set var libraryLoaded = true;

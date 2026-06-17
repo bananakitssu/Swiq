@@ -1,0 +1,20 @@
+set var indent = "   ";
+
+func spacing(amount) {
+    for (set var i = 0; i < amount; set i = i + 1) {
+        log("");
+    }
+}
+
+func main() [indent] {
+    log("Running on Swiq v"+Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__+", "+Swiq.__ENV__.__VERSION__.__BUILD_YEAR__);
+    spacing(1);
+    log(indent+"Command                   Usage");
+    spacing(1);
+    log(indent+"<file>                    Runs a specific file.");
+    log(indent+"-v                        Gives version for Swiq.");
+    spacing(2);
+    log("To get the documentation go to the Swiq GitHub Repo (https://github.com/bananakitssu/Swiq)");
+}
+
+main();

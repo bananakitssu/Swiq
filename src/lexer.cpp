@@ -51,6 +51,20 @@ Token Lexer::readNumber() {
     return Token{TokenType::NUMBER, value};
 }
 
+// Reads a hex literal like 0x1F or 0XFF. The raw text (including the 0x
+// prefix) is kept as the token's value — conversion to an actual number
+// only happens when .ConvertToNumber() is called on it.
+Token Lexer::readHexNumber() {
+    std::string value;
+    value += current(); advance(); // '0'
+    value += current(); advance(); // 'x' or 'X'
+    while (!isAtEnd() && std::isxdigit(current())) {
+        value += current();
+        advance();
+    }
+    return Token{TokenType::HEXNUMBER, value};
+}
+
 Token Lexer::readIdentifierOrKeyword() {
     std::string value;
     while (!isAtEnd() && (std::isalnum(current()) || current() == '_')) {
@@ -68,6 +82,7 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "func") return Token{TokenType::FUNC, value};
     if (value == "return") return Token{TokenType::RETURN, value};
     if (value == "for") return Token{TokenType::FOR, value};
+    if (value == "null" || value == "none" || value == "nil") return Token{TokenType::NULLVAL, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }
@@ -102,7 +117,11 @@ std::vector<Token> Lexer::tokenize() {
         Token tok;
 
         if (std::isdigit(c)) {
-            tok = readNumber();
+            if (c == '0' && (peek() == 'x' || peek() == 'X')) {
+                tok = readHexNumber();
+            } else {
+                tok = readNumber();
+            }
         } else if (std::isalpha(c) || c == '_') {
             tok = readIdentifierOrKeyword();
         } else if (c == '"') {
@@ -134,6 +153,7 @@ std::vector<Token> Lexer::tokenize() {
                 case '*': tok = {TokenType::STAR, "*"}; advance(); break;
                 case '/': tok = {TokenType::SLASH, "/"}; advance(); break;
                 case '.': tok = {TokenType::DOT, "."}; advance(); break;
+                case '@': tok = {TokenType::AT, "@"}; advance(); break;
                 case ',': tok = {TokenType::COMMA, ","}; advance(); break;
                 case '(': tok = {TokenType::LPAREN, "("}; advance(); break;
                 case ')': tok = {TokenType::RPAREN, ")"}; advance(); break;
