@@ -1,9 +1,7 @@
 # Swiq
 
 <div align="center">
-  <kbd>
-    <img src="assets/Swiq.svg" alt="Swiq Logo" width="250">
-  </kbd>
+  <img src="assets/Swiq.svg" alt="Swiq Logo" width="250">
 </div>
 
 
