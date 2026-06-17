@@ -1,0 +1,9 @@
+@import "../examples/mathlib.swiq";
+
+log(square(7));
+log(greet("Swiq"));
+log(libraryLoaded);
+
+set var contents = readFile("../examples/data.txt");
+log(contents);
+log(len(contents));

@@ -1,0 +1,23 @@
+// Hex literals are stored as text until explicitly converted
+set var h = 0x1F;
+log(h);
+
+set var n = h.ConvertToNumber();
+log(n);
+log(n + 1);
+
+// Uppercase hex digits and 0X prefix
+set var h2 = 0XFF;
+log(h2.ConvertToNumber());
+
+// Arithmetic on raw hex fails (it's still just a string)
+log("0x1F" + " is hex");
+
+// Mixing into a function
+func describe(value) {
+    return "decimal: " + value;
+}
+log(describe(0xA.ConvertToNumber()));
+
+// Bad conversion should fail clearly
+log("not hex".ConvertToNumber());

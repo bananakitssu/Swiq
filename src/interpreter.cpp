@@ -1,6 +1,8 @@
 #include "interpreter.h"
 #include <iostream>
 #include <stdexcept>
+#include <fstream>
+#include <sstream>
 
 void Interpreter::run(const std::vector<std::unique_ptr<Stmt>>& statements) {
     registerFunctions(statements);
@@ -40,7 +42,7 @@ void Interpreter::execute(const Stmt* stmt) {
 
     if (auto idxAssign = dynamic_cast<const IndexAssignStmt*>(stmt)) {
         Value arrVal = evaluate(idxAssign->array.get());
-        auto arrPtr = std::get_if<std::shared_ptr<std::vector<Value>>>(&arrVal.data);
+        auto arrPtr = std::get_if<std::shared_ptr<ArrayObject>>(&arrVal.data);
         if (!arrPtr) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(idxAssign->line) +
                                       ": cannot index into a non-array value");
@@ -51,12 +53,12 @@ void Interpreter::execute(const Stmt* stmt) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(idxAssign->line) +
                                       ": array index must be a number");
         }
-        auto& vec = **arrPtr;
-        if (*idxNum < 0 || (size_t)*idxNum >= vec.size()) {
+        auto& elements = (*arrPtr)->elements;
+        if (*idxNum < 0 || (size_t)*idxNum >= elements.size()) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(idxAssign->line) +
                                       ": array index out of bounds");
         }
-        vec[(size_t)*idxNum] = evaluate(idxAssign->value.get());
+        elements[(size_t)*idxNum] = evaluate(idxAssign->value.get());
         return;
     }
 
@@ -113,8 +115,8 @@ bool Interpreter::isTruthy(const Value& value) {
     if (auto b = std::get_if<bool>(&value.data)) return *b;
     if (auto i = std::get_if<long long>(&value.data)) return *i != 0;
     if (auto s = std::get_if<std::string>(&value.data)) return !s->empty();
-    if (auto a = std::get_if<std::shared_ptr<std::vector<Value>>>(&value.data)) return !(*a)->empty();
-    return false;
+    if (auto a = std::get_if<std::shared_ptr<ArrayObject>>(&value.data)) return !(*a)->elements.empty();
+    return false; // null/none/nil is always falsy
 }
 
 std::string Interpreter::valueToDisplayString(const Value& value) {
@@ -127,15 +129,18 @@ std::string Interpreter::valueToDisplayString(const Value& value) {
     if (auto b = std::get_if<bool>(&value.data)) {
         return *b ? "true" : "false";
     }
-    if (auto a = std::get_if<std::shared_ptr<std::vector<Value>>>(&value.data)) {
+    if (auto a = std::get_if<std::shared_ptr<ArrayObject>>(&value.data)) {
         std::string result = "[";
-        const auto& vec = **a;
-        for (size_t i = 0; i < vec.size(); i++) {
+        const auto& elements = (*a)->elements;
+        for (size_t i = 0; i < elements.size(); i++) {
             if (i > 0) result += ", ";
-            result += valueToDisplayString(vec[i]);
+            result += valueToDisplayString(elements[i]);
         }
         result += "]";
         return result;
+    }
+    if (std::holds_alternative<std::monostate>(value.data)) {
+        return "null";
     }
     return "";
 }
@@ -161,8 +166,8 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                                       ": len() expects exactly 1 argument");
         }
-        if (auto a = std::get_if<std::shared_ptr<std::vector<Value>>>(&args[0].data)) {
-            return Value((long long)(*a)->size());
+        if (auto a = std::get_if<std::shared_ptr<ArrayObject>>(&args[0].data)) {
+            return Value((long long)(*a)->elements.size());
         }
         if (auto s = std::get_if<std::string>(&args[0].data)) {
             return Value((long long)s->size());
@@ -176,13 +181,57 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                                       ": push() expects exactly 2 arguments (array, value)");
         }
-        auto a = std::get_if<std::shared_ptr<std::vector<Value>>>(&args[0].data);
+        auto a = std::get_if<std::shared_ptr<ArrayObject>>(&args[0].data);
         if (!a) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                                       ": push() requires an array as its first argument");
         }
-        (*a)->push_back(args[1]);
-        return Value((long long)(*a)->size());
+        if ((*a)->fixed) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": push() cannot grow a fixed-size array created with AllocatedArray()");
+        }
+        (*a)->elements.push_back(args[1]);
+        return Value((long long)(*a)->elements.size());
+    }
+
+    if (name == "AllocatedArray") {
+        if (args.size() != 1) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": AllocatedArray() expects exactly 1 argument (size)");
+        }
+        auto sizeNum = std::get_if<long long>(&args[0].data);
+        if (!sizeNum) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": AllocatedArray() requires a number as its size");
+        }
+        if (*sizeNum < 0) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": AllocatedArray() size cannot be negative");
+        }
+        auto obj = std::make_shared<ArrayObject>();
+        obj->fixed = true;
+        obj->elements.assign((size_t)*sizeNum, Value()); // every slot starts as null
+        return Value(obj);
+    }
+
+    if (name == "readFile") {
+        if (args.size() != 1) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": readFile() expects exactly 1 argument (path)");
+        }
+        auto path = std::get_if<std::string>(&args[0].data);
+        if (!path) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": readFile() requires a string path");
+        }
+        std::ifstream file(*path);
+        if (!file) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": could not open file '" + *path + "'");
+        }
+        std::stringstream buffer;
+        buffer << file.rdbuf();
+        return Value(buffer.str());
     }
 
     throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
@@ -254,17 +303,28 @@ Value Interpreter::evaluate(const Expr* expr) {
         return Value(boolean->value);
     }
 
+    if (dynamic_cast<const NullExpr*>(expr)) {
+        return Value(); // null / none / nil all evaluate to the same thing
+    }
+
+    if (auto hex = dynamic_cast<const HexExpr*>(expr)) {
+        // Hex literals are stored as plain text (e.g. "0x1F"), not a number.
+        // This is intentional: + on them concatenates like any other string,
+        // and arithmetic on them fails until .ConvertToNumber() is called.
+        return Value(hex->raw);
+    }
+
     if (auto arr = dynamic_cast<const ArrayExpr*>(expr)) {
-        auto vec = std::make_shared<std::vector<Value>>();
+        auto obj = std::make_shared<ArrayObject>();
         for (const auto& elemExpr : arr->elements) {
-            vec->push_back(evaluate(elemExpr.get()));
+            obj->elements.push_back(evaluate(elemExpr.get()));
         }
-        return Value(vec);
+        return Value(obj); // fixed defaults to false: [...] literals are growable
     }
 
     if (auto idx = dynamic_cast<const IndexExpr*>(expr)) {
         Value arrVal = evaluate(idx->array.get());
-        auto arrPtr = std::get_if<std::shared_ptr<std::vector<Value>>>(&arrVal.data);
+        auto arrPtr = std::get_if<std::shared_ptr<ArrayObject>>(&arrVal.data);
         if (!arrPtr) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(idx->line) +
                                       ": cannot index into a non-array value");
@@ -275,12 +335,45 @@ Value Interpreter::evaluate(const Expr* expr) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(idx->line) +
                                       ": array index must be a number");
         }
-        auto& vec = **arrPtr;
-        if (*idxNum < 0 || (size_t)*idxNum >= vec.size()) {
+        auto& elements = (*arrPtr)->elements;
+        if (*idxNum < 0 || (size_t)*idxNum >= elements.size()) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(idx->line) +
                                       ": array index out of bounds");
         }
-        return vec[(size_t)*idxNum];
+        return elements[(size_t)*idxNum];
+    }
+
+    if (auto mcall = dynamic_cast<const MethodCallExpr*>(expr)) {
+        Value obj = evaluate(mcall->object.get());
+
+        if (mcall->method == "ConvertToNumber") {
+            if (!mcall->args.empty()) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                          ": ConvertToNumber() takes no arguments");
+            }
+            auto s = std::get_if<std::string>(&obj.data);
+            if (!s) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                          ": ConvertToNumber() can only be called on a hex (or numeric string) value");
+            }
+            try {
+                long long parsed;
+                if (s->size() > 2 && s->rfind("0x", 0) == 0) {
+                    parsed = std::stoll(s->substr(2), nullptr, 16);
+                } else if (s->size() > 2 && s->rfind("0X", 0) == 0) {
+                    parsed = std::stoll(s->substr(2), nullptr, 16);
+                } else {
+                    parsed = std::stoll(*s, nullptr, 10);
+                }
+                return Value(parsed);
+            } catch (const std::exception&) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                          ": '" + *s + "' is not a valid number for ConvertToNumber()");
+            }
+        }
+
+        throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                  ": unknown method '" + mcall->method + "'");
     }
 
     if (auto call = dynamic_cast<const CallExpr*>(expr)) {
@@ -289,7 +382,8 @@ Value Interpreter::evaluate(const Expr* expr) {
             args.push_back(evaluate(argExpr.get()));
         }
 
-        if (call->callee == "len" || call->callee == "push") {
+        if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
+            call->callee == "readFile") {
             return callBuiltin(call->callee, args, call->line);
         }
 
@@ -351,10 +445,12 @@ Value Interpreter::evaluate(const Expr* expr) {
                 equal = std::get<std::string>(left.data) == std::get<std::string>(right.data);
             } else if (std::holds_alternative<bool>(left.data)) {
                 equal = std::get<bool>(left.data) == std::get<bool>(right.data);
+            } else if (std::holds_alternative<std::monostate>(left.data)) {
+                equal = true; // null == null (and none/nil, since they're all the same value)
             } else {
                 // Arrays compare by identity (same underlying array)
-                equal = std::get<std::shared_ptr<std::vector<Value>>>(left.data) ==
-                        std::get<std::shared_ptr<std::vector<Value>>>(right.data);
+                equal = std::get<std::shared_ptr<ArrayObject>>(left.data) ==
+                        std::get<std::shared_ptr<ArrayObject>>(right.data);
             }
             return Value(op == "==" ? equal : !equal);
         }

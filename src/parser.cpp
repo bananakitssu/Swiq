@@ -1,5 +1,7 @@
 #include "parser.h"
 #include <stdexcept>
+#include <fstream>
+#include <sstream>
 
 Parser::Parser(std::vector<Token> tokens) : tokens(std::move(tokens)) {}
 
@@ -37,9 +39,46 @@ Token Parser::expect(TokenType type, const std::string& errorMsg) {
 std::vector<std::unique_ptr<Stmt>> Parser::parse() {
     std::vector<std::unique_ptr<Stmt>> statements;
     while (!check(TokenType::END_OF_FILE)) {
-        statements.push_back(parseStatement());
+        if (check(TokenType::AT)) {
+            parseImportAndAppend(statements);
+        } else {
+            statements.push_back(parseStatement());
+        }
     }
     return statements;
+}
+
+// @import "path/to/file.swiq";
+// Reads, lexes, and parses the target file right now, then splices its
+// statements directly into `target` — as if the file's contents had been
+// pasted in at this exact spot. Only valid at the top level of a file
+// (not inside a function/if/while body). Supports nested imports.
+void Parser::parseImportAndAppend(std::vector<std::unique_ptr<Stmt>>& target) {
+    expect(TokenType::AT, "expected '@'");
+    Token kw = expect(TokenType::IDENTIFIER, "expected 'import' after '@'");
+    if (kw.value != "import") {
+        throw std::runtime_error("Parse error at line " + std::to_string(kw.line) +
+                                  ": expected 'import' after '@', got '" + kw.value + "'");
+    }
+    Token pathTok = expect(TokenType::STRING, "expected a file path string after '@import'");
+    expect(TokenType::SEMICOLON, "expected ';'");
+
+    std::ifstream file(pathTok.value);
+    if (!file) {
+        throw std::runtime_error("Parse error at line " + std::to_string(pathTok.line) +
+                                  ": could not open imported file '" + pathTok.value + "'");
+    }
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+
+    Lexer importLexer(buffer.str());
+    std::vector<Token> importTokens = importLexer.tokenize();
+    Parser importParser(importTokens);
+    std::vector<std::unique_ptr<Stmt>> importedStatements = importParser.parse(); // handles nested @imports too
+
+    for (auto& stmt : importedStatements) {
+        target.push_back(std::move(stmt));
+    }
 }
 
 std::unique_ptr<Stmt> Parser::parseStatement() {
@@ -77,8 +116,9 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
         return parseLogStmt();
     }
 
-    // Generic function/builtin call used as a statement, e.g. push(arr, 5);
-    if (check(TokenType::IDENTIFIER) && peekAt(1).type == TokenType::LPAREN) {
+    // Generic expression used as a statement, e.g. push(arr, 5); or x.ConvertToNumber();
+    // (the value, if any, is just discarded)
+    if (check(TokenType::IDENTIFIER)) {
         auto expr = parseExpr();
         expect(TokenType::SEMICOLON, "expected ';'");
         return std::make_unique<ExprStmt>(std::move(expr));
@@ -291,14 +331,30 @@ std::unique_ptr<Expr> Parser::parseMultiplicative() {
     return left;
 }
 
-// Handles member access (a.b) and indexing (a[b]), chainable: a.b[0].c
+// Handles member access (a.b), method calls (a.b(args)), and indexing
+// (a[b]) — chainable: a.b[0].c()
 std::unique_ptr<Expr> Parser::parsePostfix() {
     auto expr = parsePrimary();
     while (true) {
         if (check(TokenType::DOT)) {
             Token dotTok = advance();
-            Token prop = expect(TokenType::IDENTIFIER, "expected property name after '.'");
-            expr = std::make_unique<MemberExpr>(std::move(expr), prop.value, dotTok.line);
+            Token prop = expect(TokenType::IDENTIFIER, "expected property or method name after '.'");
+
+            if (check(TokenType::LPAREN)) {
+                advance(); // consume '('
+                std::vector<std::unique_ptr<Expr>> args;
+                if (!check(TokenType::RPAREN)) {
+                    args.push_back(parseExpr());
+                    while (check(TokenType::COMMA)) {
+                        advance();
+                        args.push_back(parseExpr());
+                    }
+                }
+                expect(TokenType::RPAREN, "expected ')'");
+                expr = std::make_unique<MethodCallExpr>(std::move(expr), prop.value, std::move(args), dotTok.line);
+            } else {
+                expr = std::make_unique<MemberExpr>(std::move(expr), prop.value, dotTok.line);
+            }
         } else if (check(TokenType::LBRACKET)) {
             Token brTok = advance();
             auto indexExpr = parseExpr();
@@ -317,6 +373,11 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
         return std::make_unique<NumberExpr>(std::stoll(tok.value));
     }
 
+    if (check(TokenType::HEXNUMBER)) {
+        Token tok = advance();
+        return std::make_unique<HexExpr>(tok.value);
+    }
+
     if (check(TokenType::STRING)) {
         Token tok = advance();
         return std::make_unique<StringExpr>(tok.value);
@@ -330,6 +391,11 @@ std::unique_ptr<Expr> Parser::parsePrimary() {
     if (check(TokenType::FALSE)) {
         advance();
         return std::make_unique<BoolExpr>(false);
+    }
+
+    if (check(TokenType::NULLVAL)) {
+        advance();
+        return std::make_unique<NullExpr>();
     }
 
     if (check(TokenType::LBRACKET)) {

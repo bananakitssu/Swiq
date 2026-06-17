@@ -3,12 +3,12 @@
 #include <vector>
 
 enum class TokenType {
-    SET, VAR, IF, ELSE, WHILE, TRUE, FALSE, FUNC, RETURN, FOR,
-    IDENTIFIER, NUMBER, STRING,
+    SET, VAR, IF, ELSE, WHILE, TRUE, FALSE, FUNC, RETURN, FOR, NULLVAL,
+    IDENTIFIER, NUMBER, HEXNUMBER, STRING,
     EQUALS, EQUALS_EQUALS, NOT_EQUALS,
     LESS, GREATER, LESS_EQUAL, GREATER_EQUAL,
     PLUS, MINUS, STAR, SLASH,
-    DOT, COMMA,
+    DOT, COMMA, AT,
     LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET,
     SEMICOLON,
     END_OF_FILE
@@ -36,6 +36,7 @@ private:
     bool isAtEnd() const;
 
     Token readNumber();
+    Token readHexNumber();
     Token readIdentifierOrKeyword();
     Token readString();
     void skipWhitespace();

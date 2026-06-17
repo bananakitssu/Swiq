@@ -32,6 +32,7 @@ private:
     std::unique_ptr<Stmt> parseForStmt();
     std::unique_ptr<Stmt> parseFuncDecl();
     std::unique_ptr<Stmt> parseReturnStmt();
+    void parseImportAndAppend(std::vector<std::unique_ptr<Stmt>>& target); // @import "file";
     std::vector<std::unique_ptr<Stmt>> parseBlock();
 
     std::unique_ptr<Expr> parseExpr();
