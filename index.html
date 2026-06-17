@@ -1,10 +1,605 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Swiq</title>
-    </head>
-    <body>
-        <center><p>This is the Swiq website</p></center>
-        <a href="https://github.com/bananakitssu/Swiq">Go to Swiq GitHub repo</a>
-    </body>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Swiq — a small language, built from scratch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f8fafc;
+    --ink: #0f172a;
+    --ink-soft: #64748b;
+    --border: #e6e9ef;
+    --code-bg: #0f1424;
+    --code-text: #e5e7eb;
+    --indigo: #4338ca;
+    --cyan: #22d3ee;
+    --amber: #f59e0b;
+    --gradient: linear-gradient(120deg, var(--indigo), var(--cyan));
+    --kw: #a78bfa;
+    --str: #86efac;
+    --num: #67e8f9;
+    --cmt: #6b7280;
+    --fn: #fcd34d;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  h1, h2, h3, .brand {
+    font-family: 'Sora', sans-serif;
+  }
+
+  code, pre, .mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--indigo);
+    outline-offset: 3px;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- nav ---------- */
+  nav.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 24px;
+    max-width: 1080px;
+    margin: 0 auto;
+  }
+
+  .brand {
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+
+  .nav-links a:hover { color: var(--ink); }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: 1px solid transparent;
+    cursor: pointer;
+  }
+
+  .btn-primary {
+    background: var(--ink);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #1e293b; }
+
+  /* ---------- hero ---------- */
+  header.hero {
+    padding: 56px 0 80px;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--indigo);
+    background: #eef2ff;
+    padding: 6px 12px;
+    border-radius: 999px;
+    margin-bottom: 18px;
+  }
+
+  h1.headline {
+    font-size: clamp(2.4rem, 5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
+  }
+
+  h1.headline .grad {
+    background: var(--gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .tagline {
+    font-size: 1.1rem;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin: 0 0 28px;
+    max-width: 480px;
+  }
+
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--ink);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: var(--bg-soft); }
+
+  /* ---------- terminal panel ---------- */
+  .terminal {
+    background: var(--code-bg);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px -20px rgba(67, 56, 202, 0.35);
+  }
+
+  .terminal-bar {
+    display: flex;
+    gap: 8px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  .terminal-body {
+    padding: 22px 20px 26px;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    color: var(--code-text);
+    min-height: 210px;
+  }
+
+  .prompt::before {
+    content: "$ ";
+    color: var(--cmt);
+  }
+
+  #typed-code { white-space: pre-wrap; }
+  .out-line { color: #93c5fd; }
+
+  .kw { color: var(--kw); }
+  .str { color: var(--str); }
+  .num { color: var(--num); }
+  .fn  { color: var(--fn); }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 1.1em;
+    background: var(--cyan);
+    vertical-align: -2px;
+    animation: blink 1s steps(1) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; }
+  }
+
+  /* ---------- features ---------- */
+  section.features {
+    padding: 70px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .section-head {
+    max-width: 560px;
+    margin: 0 0 40px;
+  }
+
+  .section-head h2 {
+    font-size: clamp(1.7rem, 3vw, 2.1rem);
+    font-weight: 700;
+    margin: 0 0 10px;
+    letter-spacing: -0.01em;
+  }
+
+  .section-head p {
+    color: var(--ink-soft);
+    font-size: 1.02rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .feature-card {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 22px 24px;
+    background: var(--bg-soft);
+  }
+
+  .feature-card h3 {
+    font-size: 1.02rem;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  .feature-card p {
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  .feature-card code {
+    background: #eef2ff;
+    color: var(--indigo);
+    padding: 1px 6px;
+    border-radius: 5px;
+    font-size: 0.85rem;
+  }
+
+  /* ---------- spotlight ---------- */
+  section.spotlight {
+    padding: 64px 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .spotlight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+
+  .spotlight-grid.reverse .spotlight-text { order: 2; }
+  .spotlight-grid.reverse .spotlight-code { order: 1; }
+
+  .spotlight-tag {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .spotlight-text h2 {
+    font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+    margin: 0 0 14px;
+    letter-spacing: -0.01em;
+  }
+
+  .spotlight-text p {
+    color: var(--ink-soft);
+    line-height: 1.65;
+    font-size: 1rem;
+    margin: 0 0 12px;
+  }
+
+  .code-block {
+    background: var(--code-bg);
+    border-radius: 12px;
+    padding: 20px 20px 22px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    color: var(--code-text);
+    overflow-x: auto;
+    margin: 0;
+  }
+
+  .code-block .out {
+    color: #93c5fd;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    display: block;
+  }
+
+  /* ---------- get started ---------- */
+  section.get-started {
+    padding: 64px 0 80px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+
+  section.get-started h2 {
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    margin: 0 0 14px;
+  }
+
+  section.get-started p {
+    color: var(--ink-soft);
+    margin: 0 0 28px;
+  }
+
+  .install-block {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: 12px;
+    padding: 20px 24px;
+    text-align: left;
+    max-width: 520px;
+    margin: 0 auto 28px;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    white-space: pre-wrap;
+  }
+
+  .install-block .cmt { color: var(--cmt); }
+
+  /* ---------- footer ---------- */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 28px 0 40px;
+  }
+
+  .footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer-note {
+    color: var(--ink-soft);
+    font-size: 0.88rem;
+  }
+
+  .version-badge {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px 10px;
+  }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 860px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .feature-grid { grid-template-columns: repeat(2, 1fr); }
+    .spotlight-grid, .spotlight-grid.reverse {
+      grid-template-columns: 1fr;
+    }
+    .spotlight-grid.reverse .spotlight-text,
+    .spotlight-grid.reverse .spotlight-code { order: initial; }
+  }
+
+  @media (max-width: 560px) {
+    .feature-grid { grid-template-columns: 1fr; }
+    .nav-links { display: none; }
+    .hero-ctas .btn { flex: 1; justify-content: center; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <span class="brand">Swiq</span>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#closures">Closures</a>
+    <a href="#get-started">Get started</a>
+  </div>
+  <a class="btn btn-primary" href="https://github.com/bananakitssu/Swiq" target="_blank" rel="noopener">View on GitHub</a>
+</nav>
+
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">A language, built from scratch</span>
+      <h1 class="headline">A small language<br>with a <span class="grad">real compiler pipeline.</span></h1>
+      <p class="tagline">Lexer, recursive-descent parser, tree-walking interpreter — all written in C++, one feature at a time. Functions, closures, arrays, loops, and a syntax you won't find anywhere else.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="https://github.com/bananakitssu/Swiq" target="_blank" rel="noopener">View on GitHub</a>
+        <a class="btn btn-secondary" href="#features">See what it can do</a>
+      </div>
+    </div>
+
+    <div class="terminal">
+      <div class="terminal-bar">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+      </div>
+      <div class="terminal-body">
+        <div class="prompt mono">./swiq hello.swiq</div>
+        <div id="typed-code" class="mono"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="features" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <h2>Everything a tiny language needs</h2>
+      <p>Built up piece by piece — every feature here exists because something didn't work without it.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>Functions &amp; recursion</h3>
+        <p>Declare with <code>func</code>, return with <code>return</code>. Recursive calls work exactly like you'd expect.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Explicit closures</h3>
+        <p>Functions see nothing by default. Add a name to <code>[brackets]</code> to let one in, on purpose.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Arrays</h3>
+        <p><code>[1, 2, 3]</code> literals, indexing, in-place mutation, plus <code>len()</code> and <code>push()</code>.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Real precedence</h3>
+        <p><code>2 + 3 * 4</code> evaluates the way math actually works, not just left to right.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Three comment styles</h3>
+        <p><code>#</code>, <code>//</code>, and <code>/* */</code> — pick whichever your fingers prefer.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Line-numbered errors</h3>
+        <p>Every parse and runtime error points at the exact line that caused it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="spotlight" id="closures">
+  <div class="wrap spotlight-grid">
+    <div class="spotlight-text">
+      <span class="spotlight-tag">The Swiq way</span>
+      <h2>Closures, but you have to ask first</h2>
+      <p>Most languages let a function quietly see every variable around it. Swiq flips that: functions are isolated by default, and you list exactly which outer variable a function is allowed to touch.</p>
+      <p>Listed variables get full read-and-write access — change them inside the function, and the change is still there once it returns. Anything you didn't list stays invisible.</p>
+    </div>
+    <div class="spotlight-code">
+      <pre class="code-block"><span class="kw">set</span> <span class="kw">var</span> counter = <span class="num">0</span>;
+
+<span class="kw">func</span> <span class="fn">increment</span>()[counter] {
+    <span class="kw">set</span> counter = counter + <span class="num">1</span>;
+    <span class="kw">return</span> counter;
+}
+
+log(<span class="fn">increment</span>());
+log(<span class="fn">increment</span>());
+log(counter);
+<span class="out">1
+2
+2</span></pre>
+    </div>
+  </div>
+</section>
+
+<section class="spotlight">
+  <div class="wrap spotlight-grid reverse">
+    <div class="spotlight-code">
+      <pre class="code-block"><span class="kw">set</span> <span class="kw">var</span> arr = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>];
+<span class="fn">push</span>(arr, <span class="num">40</span>);
+
+<span class="kw">set</span> <span class="kw">var</span> sum = <span class="num">0</span>;
+<span class="kw">for</span> (<span class="kw">set</span> <span class="kw">var</span> i = <span class="num">0</span>; i &lt; <span class="fn">len</span>(arr); <span class="kw">set</span> i = i + <span class="num">1</span>) {
+    <span class="kw">set</span> sum = sum + arr[i];
+}
+
+log(sum);
+<span class="out">100</span></pre>
+    </div>
+    <div class="spotlight-text">
+      <span class="spotlight-tag">Loops &amp; arrays</span>
+      <h2>C-style for loops, real array mutation</h2>
+      <p>Arrays have reference semantics — push into one inside a loop or a function, and every variable pointing at it sees the update. Combined with a familiar three-clause <code>for</code>, you get the building blocks for actual programs, not just toy scripts.</p>
+    </div>
+  </div>
+</section>
+
+<section class="get-started" id="get-started">
+  <div class="wrap">
+    <h2>Try it yourself</h2>
+    <p>Clone the repo, build with CMake, run your first <code>.swiq</code> file.</p>
+    <div class="install-block mono"><span class="cmt">$ git clone https://github.com/YOUR_USERNAME/swiq.git &amp;&amp; cd swiq</span>
+mkdir build &amp;&amp; cd build
+cmake ..
+make
+./swiq ../examples/hello.swiq</div>
+    <a class="btn btn-primary" href="https://github.com/" target="_blank" rel="noopener">View the source on GitHub</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-row">
+    <span class="footer-note">Built one token at a time.</span>
+    <span class="version-badge">swiq v1 · 2026</span>
+  </div>
+</footer>
+
+<script>
+  const codeLines = [
+    { text: 'set var x = 5;', html: '<span class="kw">set</span> <span class="kw">var</span> x = <span class="num">5</span>;' },
+    { text: 'log(x + 2);', html: '<span class="fn">log</span>(x + <span class="num">2</span>);' }
+  ];
+  const target = document.getElementById('typed-code');
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function renderFinal() {
+    target.innerHTML = codeLines.map(l => l.html).join('<br>') + '<br><span class="out-line">7</span>';
+  }
+
+  if (reduceMotion) {
+    renderFinal();
+  } else {
+    let lineIndex = 0, charIndex = 0;
+    let builtHtml = '';
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    }
+
+    function typeStep() {
+      if (lineIndex >= codeLines.length) {
+        target.innerHTML = builtHtml + '<br><span class="out-line">7</span>';
+        return;
+      }
+      const line = codeLines[lineIndex];
+      if (charIndex <= line.text.length) {
+        const partial = line.text.slice(0, charIndex);
+        target.innerHTML = builtHtml + escapeHtml(partial) + '<span class="cursor"></span>';
+        charIndex++;
+        setTimeout(typeStep, 38);
+      } else {
+        builtHtml += line.html + '<br>';
+        lineIndex++;
+        charIndex = 0;
+        setTimeout(typeStep, 220);
+      }
+    }
+
+    setTimeout(typeStep, 400);
+  }
+</script>
+
+</body>
 </html>
+
