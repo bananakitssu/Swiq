@@ -9,6 +9,7 @@ add_executable(swiq
     src/lexer.cpp
     src/parser.cpp
     src/interpreter.cpp
+    src/value.cpp
 )
 
 target_include_directories(swiq PRIVATE src)
