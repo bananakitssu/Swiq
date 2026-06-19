@@ -32,7 +32,7 @@ jobs:
         run: |
           rm -rf dist
 
-       - name: Generate Environment and Compile All TSX
+      - name: Generate Environment and Compile All TSX
          run: |
           npm init -y
           
