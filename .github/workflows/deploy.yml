@@ -28,6 +28,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Erase Cache
+        run: |
+          rm -rf dist
+
       - name: Generate Environment and Compile All TSX
         run: |
           npm init -y
