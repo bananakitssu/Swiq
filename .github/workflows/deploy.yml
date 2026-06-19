@@ -1,0 +1,52 @@
+name: Deploy Multiple TSX to Pages
+
+on:
+  push:
+    branches: ["swiq-website"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate Environment and Compile All TSX
+        run: |
+          npm init -y
+          
+          npm install typescript react react-dom @types/react @types/react-dom
+          
+          npx tsc --jsx react-jsx --target es2022 --module es2020 --moduleResolution node --allowSyntheticDefaultImports true *.tsx
+          
+          mkdir dist
+          
+          cp new.html dist/
+          cp *.js dist/
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
