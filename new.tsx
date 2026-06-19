@@ -17,7 +17,9 @@ export default function SwiqHome() {
                 textAlign: 'left',
                 fontFamily: 'arial'
             }}>
-                <img src="Swiq.svg" width='15px' height='15px' />
+                <img src="Swiq.svg" width='25px' height='25px' style={{
+                    borderRadius: '999px'
+                }} />
             </nav>
         </div>
     )
