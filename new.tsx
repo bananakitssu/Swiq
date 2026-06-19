@@ -14,11 +14,11 @@ export default function SwiqHome() {
                 borderRadius: '999px',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                textAlign: 'center',
+                alignItems: 'left',
+                textAlign: 'left',
                 fontFamily: 'arial'
             }}>
-                Swiq
+                <img src="Swiq.svg" />
             </nav>
         </div>
     )
