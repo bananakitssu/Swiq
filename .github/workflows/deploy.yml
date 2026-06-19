@@ -42,9 +42,9 @@ jobs:
            
            mkdir dist
            
-           cp new.html dist/
-           cp index.html dist/
+           cp *.html dist/
            cp *.js dist/
+           cp *.svg dist/
 
       - name: Upload Build Artifacts
         uses: actions/upload-pages-artifact@v3
