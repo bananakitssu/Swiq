@@ -30,7 +30,7 @@ jobs:
 
       - name: Erase Cache
         run: |
-          rm -rf dist
+           rm -rf dist
 
        - name: Generate Environment and Compile All TSX
          run: |

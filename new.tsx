@@ -8,7 +8,6 @@ export default function SwiqHome() {
                 position: 'relative',
                 top: 0,
                 left: 0,
-                width: '100%',
                 height: '30px',
                 padding: '10px',
                 borderRadius: '999px',
@@ -18,7 +17,7 @@ export default function SwiqHome() {
                 textAlign: 'left',
                 fontFamily: 'arial'
             }}>
-                <img src="Swiq.svg" />
+                <img src="Swiq.svg" width='15px' height='15px' />
             </nav>
         </div>
     )
