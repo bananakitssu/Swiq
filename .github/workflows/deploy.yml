@@ -39,6 +39,7 @@ jobs:
           mkdir dist
           
           cp new.html dist/
+          cp index.html dist/
           cp *.js dist/
 
       - name: Upload Build Artifacts
