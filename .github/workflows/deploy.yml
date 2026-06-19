@@ -30,21 +30,21 @@ jobs:
 
       - name: Erase Cache
         run: |
-           rm -rf dist
+          rm -rf dist
 
        - name: Generate Environment and Compile All TSX
          run: |
-           npm init -y
-           
-           npm install typescript react react-dom @types/react @types/react-dom
-           
-           npx tsc --jsx react-jsx --target es2022 --module es2020 --moduleResolution bundler --allowSyntheticDefaultImports true *.tsx
-           
-           mkdir dist
-           
-           cp new.html dist/
-           cp index.html dist/
-           cp *.js dist/
+          npm init -y
+          
+          npm install typescript react react-dom @types/react @types/react-dom
+          
+          npx tsc --jsx react-jsx --target es2022 --module es2020 --moduleResolution bundler --allowSyntheticDefaultImports true *.tsx
+          
+          mkdir dist
+          
+          cp new.html dist/
+          cp index.html dist/
+          cp *.js dist/
 
       - name: Upload Build Artifacts
         uses: actions/upload-pages-artifact@v3
