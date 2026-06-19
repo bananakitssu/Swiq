@@ -9,7 +9,14 @@ export default function SwiqHome() {
                 top: 0,
                 left: 0,
                 width: '100%',
-                height: '30px'
+                height: '30px',
+                padding: '10px',
+                borderRadius: '999px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center',
+                fontFamily: 'arial'
             }}>
                 Swiq
             </nav>
