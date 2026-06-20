@@ -455,16 +455,16 @@ Value Interpreter::evaluate(const Expr* expr) {
     }
 
     if (auto var = dynamic_cast<const VariableExpr*>(expr)) {
+        if (archived_variables.find(var->name) != archived_variables.end()) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(var->line) +
+                                      ": the variable '" + var->name + "' is archived, Use 'restore' to unarchive it");
+        }
         auto it = variables.find(var->name);
         if (it == variables.end()) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(var->line) +
                                       ": undefined variable '" + var->name + "'");
         }
-        if (it == archived_variables.end()) {
-            return "";
-        } else {
-            return it->second;
-        }
+        return it->second;
     }
 
     if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
