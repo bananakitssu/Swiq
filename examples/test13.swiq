@@ -1,0 +1,5 @@
+set var x = 5;
+set x = x + 5;
+archive x;
+restore x;
+log (x);

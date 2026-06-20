@@ -48,6 +48,22 @@ Token Lexer::readNumber() {
         value += current();
         advance();
     }
+
+    // A '.' followed by a digit makes this a float literal, e.g. 3.14.
+    // (A '.' NOT followed by a digit is left alone — it's the DOT token,
+    // used for member access / method calls, e.g. "5.ConvertToNumber()"
+    // wouldn't make sense anyway since 5 isn't a hex string, but more
+    // importantly this keeps "x.y" object field access unambiguous.)
+    if (!isAtEnd() && current() == '.' && std::isdigit(peek())) {
+        value += current();
+        advance();
+        while (!isAtEnd() && std::isdigit(current())) {
+            value += current();
+            advance();
+        }
+        return Token{TokenType::FLOATNUM, value};
+    }
+
     return Token{TokenType::NUMBER, value};
 }
 
@@ -83,6 +99,12 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "return") return Token{TokenType::RETURN, value};
     if (value == "for") return Token{TokenType::FOR, value};
     if (value == "null" || value == "none" || value == "nil") return Token{TokenType::NULLVAL, value};
+    if (value == "type") return Token{TokenType::TYPE, value};
+    if (value == "interface") return Token{TokenType::INTERFACE, value};
+    if (value == "reset") return Token{TokenType::RESET, value};
+    if (value == "delete") return Token{TokenType::DELETE, value};
+    if (value == "archive") return Token{TokenType::ARCHIVE, value};
+    if (value == "restore") return Token{TokenType::RESTORE, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }
@@ -155,6 +177,7 @@ std::vector<Token> Lexer::tokenize() {
                 case '.': tok = {TokenType::DOT, "."}; advance(); break;
                 case '@': tok = {TokenType::AT, "@"}; advance(); break;
                 case ',': tok = {TokenType::COMMA, ","}; advance(); break;
+                case ':': tok = {TokenType::COLON, ":"}; advance(); break;
                 case '(': tok = {TokenType::LPAREN, "("}; advance(); break;
                 case ')': tok = {TokenType::RPAREN, ")"}; advance(); break;
                 case '{': tok = {TokenType::LBRACE, "{"}; advance(); break;

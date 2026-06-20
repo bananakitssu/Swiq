@@ -1,0 +1,50 @@
+// ===== Floats and negatives =====
+set var f = 3.14;
+log(f);
+log(f + 1.0);
+log(f * 2.0);
+
+set var n = -5;
+log(n);
+log(-3.14);
+log(n + 10);
+
+// ===== typeof() =====
+log(typeof(42));
+log(typeof(3.14));
+log(typeof("hello"));
+log(typeof(true));
+log(typeof(null));
+log(typeof([1, 2, 3]));
+
+// ===== set type =====
+set type Point = { x: Number<integerOnly>, y: Number<integerOnly> };
+
+set var p = { x: 10, y: 20 }<Point>;
+log(p);
+log(p.x);
+log(p.y);
+log(typeof(p));
+
+// type fields with no value default to null
+set var p2 = { x: 5 }<Point>;
+log(p2);
+log(p2.y);
+
+// ===== set interface (always has values) =====
+set interface Config = { width: Number<integerOnly> = 800, height: Number<integerOnly> = 600, title: String = "Untitled" };
+
+// Use all defaults
+set var cfg1 = { }<Config>;
+log(cfg1);
+log(cfg1.width);
+log(cfg1.title);
+
+// Override some
+set var cfg2 = { width: 1920, title: "Swiq" }<Config>;
+log(cfg2);
+log(typeof(cfg2));
+
+// ===== Error cases =====
+// Unknown field
+set var bad = { z: 5 }<Point>;

@@ -1,0 +1,6 @@
+set var x = 5;
+log(x);
+set x = x + 10;
+log(x);
+reset x;
+log(x);
