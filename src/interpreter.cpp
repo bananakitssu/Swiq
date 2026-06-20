@@ -6,7 +6,16 @@
 
 void Interpreter::run(const std::vector<std::unique_ptr<Stmt>>& statements) {
     registerFunctions(statements);
+    registerTypes(statements);
     executeBlock(statements);
+}
+
+void Interpreter::registerTypes(const std::vector<std::unique_ptr<Stmt>>& statements) {
+    for (const auto& stmt : statements) {
+        if (auto t = dynamic_cast<const TypeDeclStmt*>(stmt.get())) {
+            types[t->name] = t;
+        }
+    }
 }
 
 void Interpreter::registerFunctions(const std::vector<std::unique_ptr<Stmt>>& statements) {
@@ -26,17 +35,68 @@ void Interpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>>& stateme
 void Interpreter::execute(const Stmt* stmt) {
     if (auto varDecl = dynamic_cast<const VarDeclStmt*>(stmt)) {
         variables[varDecl->name] = evaluate(varDecl->value.get());
+        default_variables[varDecl->name] = evaluate(varDecl->value.get());
         return;
     }
 
     if (auto assign = dynamic_cast<const AssignStmt*>(stmt)) {
         if (variables.find(assign->name) == variables.end()) {
+            if (archived_variables.find(assign->name) != archived_variables.end()) {
+                throw std::runtime_error(
+                    "Interpreter error at line " + std::to_string(assign->line) +
+                    ": cannot assign to undeclared variable '" + assign->name +
+                    "'. Use 'set var' to declare it first.");
+            }
+        }
+        if (archived_variables.find(assign->name) != archived_variables.end()) {
             throw std::runtime_error(
                 "Interpreter error at line " + std::to_string(assign->line) +
-                ": cannot assign to undeclared variable '" + assign->name +
-                "'. Use 'set var' to declare it first.");
+                ": cannot assign to archived variable '" + assign->name +
+                "'. Use 'restore' to unarchive it.");
         }
         variables[assign->name] = evaluate(assign->value.get());
+        return;
+    }
+    
+    if (auto reset = dynamic_cast<const ResetStmt*>(stmt)) {
+        if (variables.find(reset->name) == variables.end()) {
+            throw std::runtime_error(
+                "Cannot reset an unknown variable. Error at line " + std::to_string(reset->line)
+            );
+        }
+        variables[reset->name] = default_variables[reset->name];
+        return;
+    }
+    
+    if (auto _delete = dynamic_cast<const DeleteStmt*>(stmt)) {
+        if (variables.find(_delete->name) == variables.end()) {
+            throw std::runtime_error(
+                "Cannot delete an unknown variable. Error at line " + std::to_string(_delete->line)
+            );
+        }
+        variables.erase(_delete->name);
+        return;
+    }
+    
+    if (auto archive = dynamic_cast<const ArchiveStmt*>(stmt)) {
+        if (variables.find(archive->name) == variables.end()) {
+            throw std::runtime_error(
+                "Cannot archive an unknown variable. Error at line " + std::to_string(archive->line)
+            );
+        }
+        archived_variables[archive->name] = variables[archive->name];
+        variables.erase(archive->name);
+        return;
+    }
+    
+    if (auto restore = dynamic_cast<const RestoreStmt*>(stmt)) {
+        if (archived_variables.find(restore->name) == archived_variables.end()) {
+            throw std::runtime_error(
+                "Cannot restore an variable that has not been archived. Error at line " + std::to_string(restore->line)
+            );
+        }
+        variables[restore->name] = archived_variables[restore->name];
+        archived_variables.erase(restore->name);
         return;
     }
 
@@ -95,6 +155,11 @@ void Interpreter::execute(const Stmt* stmt) {
             executeBlock(forStmt->body);
             execute(forStmt->post.get());
         }
+        return;
+    }
+
+    if (dynamic_cast<const TypeDeclStmt*>(stmt)) {
+        // Already registered in registerTypes(); nothing to do at execution time.
         return;
     }
 
@@ -180,6 +245,14 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
         return Value(obj);
     }
 
+    if (name == "typeof") {
+        if (args.size() != 1) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": typeof() expects exactly 1 argument");
+        }
+        return Value(typeNameOf(args[0]));
+    }
+
     if (name == "readFile") {
         if (args.size() != 1) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
@@ -259,6 +332,26 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
 Value Interpreter::evaluate(const Expr* expr) {
     if (auto num = dynamic_cast<const NumberExpr*>(expr)) {
         return Value(num->value);
+    }
+
+    if (auto flt = dynamic_cast<const FloatExpr*>(expr)) {
+        return Value(flt->value);
+    }
+
+    if (auto unary = dynamic_cast<const UnaryExpr*>(expr)) {
+        Value operand = evaluate(unary->operand.get());
+        if (unary->op == "-") {
+            if (auto i = std::get_if<long long>(&operand.data)) return Value(-*i);
+            if (auto d = std::get_if<double>(&operand.data)) return Value(-*d);
+            throw std::runtime_error("Interpreter error at line " + std::to_string(unary->line) +
+                                      ": unary '-' requires a number");
+        }
+        throw std::runtime_error("Interpreter error at line " + std::to_string(unary->line) +
+                                  ": unknown unary operator '" + unary->op + "'");
+    }
+
+    if (auto tobj = dynamic_cast<const TypedObjectExpr*>(expr)) {
+        return constructTypedObject(tobj);
     }
 
     if (auto str = dynamic_cast<const StringExpr*>(expr)) {
@@ -349,7 +442,7 @@ Value Interpreter::evaluate(const Expr* expr) {
         }
 
         if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
-            call->callee == "readFile") {
+            call->callee == "readFile" || call->callee == "typeof") {
             return callBuiltin(call->callee, args, call->line);
         }
 
@@ -367,25 +460,34 @@ Value Interpreter::evaluate(const Expr* expr) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(var->line) +
                                       ": undefined variable '" + var->name + "'");
         }
-        return it->second;
+        if (it == archived_variables.end()) {
+            return "";
+        } else {
+            return it->second;
+        }
     }
 
     if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
-        std::string path = getMemberPath(mem);
+        // First check if the object is a typed instance — if so, field access
+        // takes priority over the static Swiq.__ENV__... path lookup.
+        Value objVal = evaluate(mem->object.get());
+        if (auto o = std::get_if<std::shared_ptr<TypedObject>>(&objVal.data)) {
+            Value* field = (*o)->find(mem->property);
+            if (!field) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(mem->line) +
+                                          ": type '" + (*o)->typeName + "' has no field '" + mem->property + "'");
+            }
+            return *field;
+        }
 
-        // Read-only built-in environment values. Not stored in `variables`,
-        // so they can never be assigned to — the grammar for 'set' only
-        // allows a plain identifier or array index on the left, never a
-        // dotted member path.
+        // Fall through to Swiq.__ENV__... static path lookup.
+        std::string path = getMemberPath(mem);
         static const std::unordered_map<std::string, Value> envMap = {
             {"Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__", Value((long long)1)},
-            {"Swiq.__ENV__.__VERSION__.__BUILD_YEAR__", Value((long long)2026)},
+            {"Swiq.__ENV__.__VERSION__.__BUILD_YEAR__",  Value((long long)2026)},
         };
-
         auto it = envMap.find(path);
-        if (it != envMap.end()) {
-            return it->second;
-        }
+        if (it != envMap.end()) return it->second;
 
         throw std::runtime_error("Interpreter error at line " + std::to_string(mem->line) +
                                   ": unknown or inaccessible property '" + path + "'");
@@ -395,6 +497,21 @@ Value Interpreter::evaluate(const Expr* expr) {
         Value left = evaluate(bin->left.get());
         Value right = evaluate(bin->right.get());
         const std::string& op = bin->op;
+
+        // Numeric arithmetic — promotes to double if either side is a float
+        if (op == "+" && !std::holds_alternative<std::string>(left.data) &&
+                         !std::holds_alternative<std::string>(right.data)) {
+            bool eitherFloat = std::holds_alternative<double>(left.data) ||
+                               std::holds_alternative<double>(right.data);
+            if (eitherFloat) {
+                auto toDouble = [](const Value& v) -> double {
+                    if (auto d = std::get_if<double>(&v.data)) return *d;
+                    if (auto i = std::get_if<long long>(&v.data)) return (double)*i;
+                    throw std::runtime_error("BinaryExpr: non-numeric in float add");
+                };
+                return Value(toDouble(left) + toDouble(right));
+            }
+        }
 
         if (op == "+" && (std::holds_alternative<std::string>(left.data) ||
                           std::holds_alternative<std::string>(right.data))) {
@@ -407,18 +524,44 @@ Value Interpreter::evaluate(const Expr* expr) {
                 equal = false;
             } else if (std::holds_alternative<long long>(left.data)) {
                 equal = std::get<long long>(left.data) == std::get<long long>(right.data);
+            } else if (std::holds_alternative<double>(left.data)) {
+                equal = std::get<double>(left.data) == std::get<double>(right.data);
             } else if (std::holds_alternative<std::string>(left.data)) {
                 equal = std::get<std::string>(left.data) == std::get<std::string>(right.data);
             } else if (std::holds_alternative<bool>(left.data)) {
                 equal = std::get<bool>(left.data) == std::get<bool>(right.data);
             } else if (std::holds_alternative<std::monostate>(left.data)) {
-                equal = true; // null == null (and none/nil, since they're all the same value)
+                equal = true;
             } else {
-                // Arrays compare by identity (same underlying array)
                 equal = std::get<std::shared_ptr<ArrayObject>>(left.data) ==
                         std::get<std::shared_ptr<ArrayObject>>(right.data);
             }
             return Value(op == "==" ? equal : !equal);
+        }
+
+        // For -, *, /, <, >, <=, >= — promote to double if either side is float
+        {
+            bool eitherFloat = std::holds_alternative<double>(left.data) ||
+                               std::holds_alternative<double>(right.data);
+            if (eitherFloat) {
+                auto toDouble = [](const Value& v) -> double {
+                    if (auto d = std::get_if<double>(&v.data)) return *d;
+                    if (auto i = std::get_if<long long>(&v.data)) return (double)*i;
+                    throw std::runtime_error("BinaryExpr: non-numeric operand");
+                };
+                double l = toDouble(left), r = toDouble(right);
+                if (op == "-") return Value(l - r);
+                if (op == "*") return Value(l * r);
+                if (op == "/") {
+                    if (r == 0.0) throw std::runtime_error("Interpreter error at line " +
+                        std::to_string(bin->line) + ": division by zero");
+                    return Value(l / r);
+                }
+                if (op == "<")  return Value(l < r);
+                if (op == ">")  return Value(l > r);
+                if (op == "<=") return Value(l <= r);
+                if (op == ">=") return Value(l >= r);
+            }
         }
 
         if (!std::holds_alternative<long long>(left.data) || !std::holds_alternative<long long>(right.data)) {
@@ -447,4 +590,93 @@ Value Interpreter::evaluate(const Expr* expr) {
     }
 
     throw std::runtime_error("Interpreter error: unknown expression type");
+}
+
+std::string Interpreter::typeNameOf(const Value& val) const {
+    if (std::holds_alternative<long long>(val.data))  return "Number";
+    if (std::holds_alternative<double>(val.data))     return "Float";
+    if (std::holds_alternative<std::string>(val.data)) return "String";
+    if (std::holds_alternative<bool>(val.data))       return "Boolean";
+    if (std::holds_alternative<std::monostate>(val.data)) return "Null";
+    if (std::holds_alternative<std::shared_ptr<ArrayObject>>(val.data)) return "Array";
+    if (auto o = std::get_if<std::shared_ptr<TypedObject>>(&val.data)) return (*o)->typeName;
+    return "Unknown";
+}
+
+bool Interpreter::fieldMatchesType(const Value& val, const TypeField& field) const {
+    // null always passes — it means "not set yet"
+    if (std::holds_alternative<std::monostate>(val.data)) return true;
+
+    if (field.baseType == "Number") {
+        if (field.modifier == "integerOnly") {
+            return std::holds_alternative<long long>(val.data);
+        }
+        if (field.modifier == "floatOnly") {
+            return std::holds_alternative<double>(val.data);
+        }
+        // No modifier: both int and float are fine
+        return std::holds_alternative<long long>(val.data) ||
+               std::holds_alternative<double>(val.data);
+    }
+    if (field.baseType == "String")  return std::holds_alternative<std::string>(val.data);
+    if (field.baseType == "Boolean") return std::holds_alternative<bool>(val.data);
+    if (field.baseType == "Array")   return std::holds_alternative<std::shared_ptr<ArrayObject>>(val.data);
+    return false;
+}
+
+Value Interpreter::constructTypedObject(const TypedObjectExpr* expr) {
+    auto it = types.find(expr->typeName);
+    if (it == types.end()) {
+        throw std::runtime_error("Interpreter error at line " + std::to_string(expr->line) +
+                                  ": unknown type or interface '" + expr->typeName + "'");
+    }
+    const TypeDeclStmt* decl = it->second;
+
+    // Build a name→value map from the supplied fields so we can look them up quickly
+    std::unordered_map<std::string, Value> supplied;
+    for (const auto& [name, valExpr] : expr->fields) {
+        // Check for unknown fields right here
+        bool found = false;
+        for (const auto& tf : decl->fields) {
+            if (tf.name == name) { found = true; break; }
+        }
+        if (!found) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(expr->line) +
+                                      ": field '" + name + "' does not exist in type '" + expr->typeName + "'");
+        }
+        supplied[name] = evaluate(valExpr.get());
+    }
+
+    // Build the typed object in declaration order
+    auto obj = std::make_shared<TypedObject>();
+    obj->typeName = expr->typeName;
+
+    for (const auto& tf : decl->fields) {
+        Value fieldVal;
+
+        auto sit = supplied.find(tf.name);
+        if (sit != supplied.end()) {
+            // Caller supplied a value — validate it
+            fieldVal = sit->second;
+            if (!fieldMatchesType(fieldVal, tf)) {
+                std::string modifier = tf.modifier.empty() ? "" : "<" + tf.modifier + ">";
+                throw std::runtime_error("Interpreter error at line " + std::to_string(expr->line) +
+                                          ": field '" + tf.name + "' expects " + tf.baseType + modifier +
+                                          " but got " + typeNameOf(fieldVal));
+            }
+        } else if (tf.defaultValue) {
+            // Not supplied but has a declared default — evaluate it
+            fieldVal = evaluate(tf.defaultValue.get());
+        } else if (decl->isInterface) {
+            // Interface fields must always resolve to a value — no nulls allowed
+            throw std::runtime_error("Interpreter error at line " + std::to_string(expr->line) +
+                                      ": interface '" + expr->typeName + "' field '" + tf.name +
+                                      "' has no default and was not supplied");
+        }
+        // type fields with no supplied value default to null (monostate) implicitly
+
+        obj->fields.emplace_back(tf.name, std::move(fieldVal));
+    }
+
+    return Value(obj);
 }

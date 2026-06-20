@@ -12,6 +12,11 @@ struct NumberExpr : Expr {
     explicit NumberExpr(long long value) : value(value) {}
 };
 
+struct FloatExpr : Expr {
+    double value;
+    explicit FloatExpr(double value) : value(value) {}
+};
+
 struct StringExpr : Expr {
     std::string value;
     explicit StringExpr(std::string value) : value(std::move(value)) {}
@@ -41,6 +46,16 @@ struct BinaryExpr : Expr {
 
     BinaryExpr(std::unique_ptr<Expr> left, std::string op, std::unique_ptr<Expr> right, int line)
         : left(std::move(left)), op(std::move(op)), right(std::move(right)), line(line) {}
+};
+
+// -expr  (currently only "-" is supported)
+struct UnaryExpr : Expr {
+    std::string op;
+    std::unique_ptr<Expr> operand;
+    int line;
+
+    UnaryExpr(std::string op, std::unique_ptr<Expr> operand, int line)
+        : op(std::move(op)), operand(std::move(operand)), line(line) {}
 };
 
 // A hex literal like 0x1F. Stored as raw text, not a number — it stays
@@ -98,6 +113,18 @@ struct CallExpr : Expr {
 
     CallExpr(std::string callee, std::vector<std::unique_ptr<Expr>> args, int line)
         : callee(std::move(callee)), args(std::move(args)), line(line) {}
+};
+
+// { field: value, field: value }<TypeName>
+// Always tagged with a declared type or interface name — there's no such
+// thing as an untagged/anonymous object literal in Swiq.
+struct TypedObjectExpr : Expr {
+    std::string typeName;
+    std::vector<std::pair<std::string, std::unique_ptr<Expr>>> fields;
+    int line;
+
+    TypedObjectExpr(std::string typeName, std::vector<std::pair<std::string, std::unique_ptr<Expr>>> fields, int line)
+        : typeName(std::move(typeName)), fields(std::move(fields)), line(line) {}
 };
 
 struct Stmt {
@@ -204,4 +231,60 @@ struct ReturnStmt : Stmt {
     int line;
 
     ReturnStmt(std::unique_ptr<Expr> value, int line) : value(std::move(value)), line(line) {}
+};
+
+// reset x
+struct ResetStmt : Stmt {
+    std::string name;
+    int line;
+    
+    ResetStmt(std::string name, int line) : name(std::move(name)), line(line) {}
+};
+
+// delete x
+struct DeleteStmt : Stmt {
+    std::string name;
+    int line;
+    
+    DeleteStmt(std::string name, int line) : name(std::move(name)), line(line) {}
+};
+
+// archive x
+struct ArchiveStmt : Stmt {
+    std::string name;
+    int line;
+    
+    ArchiveStmt(std::string name, int line) : name(std::move(name)), line(line) {}
+};
+
+// restore x
+struct RestoreStmt : Stmt {
+    std::string name;
+    int line;
+    
+    RestoreStmt(std::string name, int line) : name(std::move(name)), line(line) {}
+};
+
+// One field inside a `type` or `interface` declaration, e.g.
+// "x: Number<integerOnly>" or "x: Number<integerOnly> = 5".
+struct TypeField {
+    std::string name;
+    std::string baseType;       // "Number", "String", "Boolean", or "Array"
+    std::string modifier;       // "" or "integerOnly" or "floatOnly" (Number only)
+    std::unique_ptr<Expr> defaultValue; // nullptr for `type` fields, or for `interface` fields with no default
+};
+
+// set type T = { x: Number<integerOnly> };
+// set interface R = { x: Number<integerOnly> = 5 };
+//
+// `type` fields never have defaults — a field left unset at construction
+// becomes null. `interface` fields can have defaults, so every field
+// always resolves to a real value, never null, once defaults are applied.
+struct TypeDeclStmt : Stmt {
+    std::string name;
+    std::vector<TypeField> fields;
+    bool isInterface;
+
+    TypeDeclStmt(std::string name, std::vector<TypeField> fields, bool isInterface)
+        : name(std::move(name)), fields(std::move(fields)), isInterface(isInterface) {}
 };
