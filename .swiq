@@ -1,0 +1,8 @@
+set interface NetworkConfig = {
+    port: Number = 8080,
+    bitrate: Number<integerOnly>
+};
+
+// Allocate a typed object validated against the contract rules
+set var primarySocket = { bitrate: 9600 }<NetworkConfig>;
+log(primarySocket.port); // Output: 8080
