@@ -105,6 +105,11 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "delete") return Token{TokenType::DELETE, value};
     if (value == "archive") return Token{TokenType::ARCHIVE, value};
     if (value == "restore") return Token{TokenType::RESTORE, value};
+    if (value == "try") return Token{TokenType::TRY, value};
+    if (value == "as") return Token{TokenType::AS, value};
+    if (value == "catch") return Token{TokenType::CATCH, value};
+    if (value == "local") return Token{TokenType::LOCAL, value};
+    if (value == "global") return Token{TokenType::GLOBAL, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }

@@ -1,0 +1,3 @@
+@import "./.swiq";
+
+log(y);
