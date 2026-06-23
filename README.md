@@ -1,6 +1,7 @@
 <div align="center">
   <img src="assets/Swiq.svg" alt="Swiq Logo" width="250">
 </div>
+
 ---
 
 Swiq is a **programming language** made by *bananakitssu*
@@ -114,7 +115,7 @@ set global var x = 5;
 
 To change a variables value, that do not have `<Protected>` you have to just only use `set`:
 ```swiq
-set x = 10
+set x = 10;
 ```
 
 ## Math
@@ -159,10 +160,116 @@ Output:
 5
 ```
 
+## Functions
+
+Now let's see how to create/run functions and run built-in functions:
+
+### Creating a function (Without access to outside variables)
+
+To create a function without access to outside variables is simple:
+
+```swiq
+func myFunction (arg1, arg2) {
+  // code here
+}
+```
+
+* `func` creates the function
+* `myFunction` is the function name
+* `arg1` is the parameter name, which is a variable accessible to the function, it's value depends on what data is sent while calling the function
+* `,` is the parameter separater
+* `arg2` is another parameter name
+
+### Creating a function (With access to outside variables)
+
+Creating a function with access to outside variables are different than functions without outside variable access:
+
+```swiq
+func myFunction (arg1, arg2) [x] {
+  // code here
+}
+```
+
+* `func` creates the function
+* `myFunction` is the function name
+* `arg1` is the parameter name, which is a variable accessible to the function, it's value depends on what data is sent while calling the function
+* `,` is the parameter separater
+* `arg2` is another parameter name
+* `x` is the outside variable that the function would have access to
+
+### Running a function
+
+Running a function is very easy, you just need to type:
+
+```swiq
+myFunction("value1", "value2");
+```
+
+* `myFunction` is the function name of what function to call
+* `"value1"` is the string to pass to the function for `arg1`
+* `"value2"` is the string to pass to the function for `arg2`
+
+### Running built-in functions
+
+Swiq has built-in functions:
+
+Getting a length of an array (Returns a number):
+```swiq
+len(array);
+```
+* `array` the array variable name
+
+Adding an item to an array:
+```swiq
+push(array, 5);
+```
+* `array` the array variable name
+* `5` the item to be added
+
+Creating a size-limited array (`push` doesn't work here):
+```swiq
+set var array = AllocatedArray(10);
+```
+* `10` is the array limited size
+
+Printing text to the console:
+```swiq
+log("hi");
+```
+* `"hi"` is the text to be printed
+
+Reading a file:
+```swiq
+set var result = readFile("path/to/file.txt");
+```
+* `"path/to/file.txt"` the path to the file
+
+## Arrays
+
+Now let's look at arrays:
+
+### Creating a normal array:
+
+```swiq
+set var array = [10, 5];
+```
+* `10` is the first value in the array
+* `5` is the second value in the array
+
+### About creating an allocated array:
+
+Creating an allocated array was already stated in the `Functions -> Running built-in functions` section.
+
+Notes:
+* When creating an allocated array would fill the array with `null` up to the size of the allocated array
+* The array would have the size limit
+* Push cannot work, it would throw an error
+
 **(More information comming soon)**
 
 # Changelog
 
 No published releases
 
-**(Swiq is still under-development)**
+> [!NOTE]
+> Swiq is still under-development
