@@ -65,7 +65,7 @@ Now let's see how we can create/update variables.
 
 ### Normal Variables
 
-To create **readable** and **writeable**:
+To create **readable** and **writeable** variables:
 
 ```swiq
 set var x = 5;
@@ -153,6 +153,10 @@ Output:
 ### Substracting
 ```swiq
 log(10 - 5);
+```
+Output:
+```
+5
 ```
 
 **(More information comming soon)**
