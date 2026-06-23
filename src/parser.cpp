@@ -77,13 +77,20 @@ void Parser::parseImportAndAppend(std::vector<std::unique_ptr<Stmt>>& target) {
     std::vector<std::unique_ptr<Stmt>> importedStatements = importParser.parse(); // handles nested @imports too
 
     for (auto& stmt : importedStatements) {
+        if (auto varDecl = dynamic_cast<VarDeclStmt*>(stmt.get())) {
+            if (varDecl->isLocal) {
+                continue; 
+            }
+        }
         target.push_back(std::move(stmt));
     }
 }
 
 std::unique_ptr<Stmt> Parser::parseStatement() {
     if (check(TokenType::SET)) {
-        if (peekAt(1).type == TokenType::VAR) {
+        if (peekAt(1).type == TokenType::VAR ||
+            peekAt(1).type == TokenType::LOCAL ||
+            peekAt(1).type == TokenType::GLOBAL) {
             return parseVarDecl();
         }
         if (peekAt(1).type == TokenType::TYPE) {
@@ -137,6 +144,10 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
     if (check(TokenType::RESTORE)) {
         return parseRestoreStmt();
     }
+    
+    if (check(TokenType::TRY)) {
+        return parseTryStmt();
+    }
 
     // Generic expression used as a statement, e.g. push(arr, 5); or x.ConvertToNumber();
     // (the value, if any, is just discarded)
@@ -150,15 +161,63 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
                               ": unexpected token '" + current().value + "'");
 }
 
+// try { ... }
+std::unique_ptr<Stmt> Parser::parseTryStmt() {
+    int startLine = current().line;
+    advance();
+
+    auto tryBlock = parseBlock();
+
+    std::string errorVarName = "";
+    std::vector<std::unique_ptr<Stmt>> catchBlock;
+
+    if (check(TokenType::CATCH)) {
+        advance();
+        
+        expect(TokenType::LPAREN, "expected '(' after catch keyword");
+        expect(TokenType::IDENTIFIER, "expected error type identifier (e.g., Error)");
+        expect(TokenType::AS, "expected 'as' keyword");
+        
+        Token errVarTok = expect(TokenType::IDENTIFIER, "expected catch variable name");
+        errorVarName = errVarTok.value;
+        
+        expect(TokenType::RPAREN, "expected ')' after catch variable");
+        
+        catchBlock = parseBlock();
+    }
+
+    return std::make_unique<TryStmt>(std::move(tryBlock), std::move(errorVarName), std::move(catchBlock), startLine);
+}
+
 // set var x = <expr>;
 std::unique_ptr<Stmt> Parser::parseVarDecl() {
     expect(TokenType::SET, "expected 'set'");
+    bool isLocal = false;
+    if (check(TokenType::LOCAL)) {
+        isLocal = true;
+        advance();
+    } else if (check(TokenType::GLOBAL)) {
+        isLocal = false;
+        advance();
+    }
     expect(TokenType::VAR, "expected 'var'");
-    Token name = expect(TokenType::IDENTIFIER, "expected variable name");
+    int startLine = current().line;
+    bool isProtected = false;
+
+    if (check(TokenType::LESS)) {
+        if (peekNext().value == "Protected") {
+            advance();
+            advance();
+            expect(TokenType::GREATER, "expected '>' after protection attribute");
+            isProtected = true;
+        }
+    }
+    //throw std::runtime_error("Uh"+std::to_string((int)current().type));
+    Token name = expect(TokenType::IDENTIFIER, "expected variable namei");
     expect(TokenType::EQUALS, "expected '='");
     auto value = parseExpr();
     expect(TokenType::SEMICOLON, "expected ';'");
-    return std::make_unique<VarDeclStmt>(name.value, std::move(value));
+    return std::make_unique<VarDeclStmt>(name.value, std::move(value), isProtected, isLocal, startLine);
 }
 
 // set x = <expr>;

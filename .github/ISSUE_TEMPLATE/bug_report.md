@@ -1,30 +1,26 @@
 ---
-name: "🐛 Bug Report"
+name: "Bug Report"
 about: Report an interpreter crash, syntax error, or bad state evaluation in Swiq
 title: "[BUG]: "
 labels: bug
 assignees: ''
 ---
 
-## 💥 Describe the Bug
-A clear and concise description of what the runtime error is.
+I am having an issue with Swiq
 
-## 💻 Minimal Reproducible Script
-Provide a minimal `.swiq` script file that triggers the bug:
-`swiq
-// Paste your code here
-`
+  I am getting an error in Swiq saying `...`
+  The code that triggers the bug is:
+```swiq
+...
+```
+ 
+  I am running this code on Swiq v... on ...
 
-## 📋 Exact Error Output
-Copy and paste the exact C++ exception string thrown by the interpreter:
-`text
-// Paste interpreter error output here
-`
 
-## 🌐 Environment Details
-- **Host OS:** (e.g., Linux, Windows, Android/Termux)
-- **C++ Compiler & Version:** (e.g., g++ 13, clang++ 17)
-- **Swiq Build Version:** (e.g., Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__)
-
-## 🎯 Additional Context
-Any extra details, such as whether the variable was previously `archived` or executed inside an isolated closure capture block.
+[WHAT TO CHANGE]: You must change "Swiq v..." with the version of Swiq your using
+such as "Swiq v1", and you must change "on ..." with the device/software your using
+(e.g., Windows, Android Termux, Linux, MacOS, Replit) and you have to change
+"I am getting an error in Swiq saying `...`" to what error you got
+(e.g., "I am getting an error in Swiq saying `Interpreter error at line 3: cannot assign to protected variable 'x'`)
+and then update the code block and type what was the code that triggered the issue.
+(You can remove this message)

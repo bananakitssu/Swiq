@@ -1,167 +1,164 @@
-# Swiq
-
 <div align="center">
   <img src="assets/Swiq.svg" alt="Swiq Logo" width="250">
 </div>
+---
 
-A small programming language, built from scratch in C++.
+Swiq is a **programming language** made by *bananakitssu*
 
-## Core Architectural Concepts
+The syntax is similar to these languages:
+* C++/C#/C
+* Python
+* Kotlin
+* Lua/Luau
+* JavaScript/TypeScript
 
-### Type vs. Interface Contracts
-Data models are defined using either `type` or `interface` structures. Both enforce explicit base types (`Number`, `String`, `Boolean`, or `Array`) and numeric modifiers like `<integerOnly>` or `<floatOnly>` inside curly braces using field colon definitions:
-* **`type` Definitions:** Flexible layout structures. Any field left omitted when creating an object instance automatically defaults to a raw `null` (`std::monostate`).
-* **`interface` Contracts:** Strict data boundaries. Every single field must either define a default value within the signature or be explicitly supplied at initialization. Omitting a field with no default throws an engine runtime error.
+# Documentation
 
-### State-Machine Lifecycles
-Swiq lets you manipulate runtime identifiers using explicit statement operators:
-* `archive x;` — Strips a variable out of the active runtime execution environment and places it into an isolated background state map. It is blocked from all reads and mutations.
-* `restore x;` — Revives an archived variable, hydrating its signature back into the live active scope.
-* `reset x;` — Instantly rolls a variable back to the initial baseline value it held when it was declared.
-* `delete x;` — Completely purges a variable's memory allocation and identifier tracking from the scope.
+## Downloading Swiq
 
-## Features
+**(Note: You would need `cmake` and `make` installed)**
 
-- Variables: `set var x = 5;` to declare, `set x = 10;` to reassign
-- Advanced State Operators: `reset x;`, `delete x;`, `archive x;`, and `restore x;` to control variable lifecycles natively
-- Hard Type Isolation: Integers (`long long`) and Floats (`double`) are strictly separated (e.g., `5 == 5.0` evaluates to `false`)
-- Strict Tagged Objects: `{ field: value }<TypeName>` syntax validated against custom structures
-- File System Modules: Compile-time code composition using the `@import "filename.swiq";` directive
-- Arithmetic with correct precedence: `+`, `-`, `*`, `/`
-- Strings, with `+` for concatenation
-- Booleans: `true`, `false`
-- Comparisons: `==`, `!=`, `<`, `>`, `<=`, `>=`
-- Conditionals: `if (...) { ... } else { ... }`
-- Loops: `while (...) { ... }` and `for (init; condition; post) { ... }`
-- Functions with recursion: `func name(params) { ... return expr; }`
-- Closures via explicit capture lists: `func name(params)[capturedVar] { ... }`
-- Arrays: `[1, 2, 3]`, indexing `arr[0]`, index assignment `set arr[0] = 99;`
-- Built-in functions: `len(arr)`, `push(arr, value)`
-- Comments: `#`, `//`, and `/* ... */`
-- A read-only environment namespace (`Swiq.__ENV__...`), accessible via `./swiq -v`
+To download Swiq onto your device, download the ZIP file, extract it, then go into the extracted folder:
 
-## Examples
+```bash
+cd Swiq
+```
 
-### Basics
+Then make a new directory called `build` and go into that folder:
+
+```bash
+mkdir build && cd build
+```
+
+Then run **CMake** and build it with `make`:
+
+```bash
+cmake .. && make
+```
+
+You now have Swiq as an executable file, to move it run:
+```bash
+mv ./swiq to/another/directory
+```
+or to copy it, run:
+```bash
+cp ./swiq to/another/directory
+```
+
+## Swiq commands
+
+There are currently **2** commands in Swiq.
+
+For getting the Swiq version:
+```bash
+./swiq -v
+```
+
+For running a Swiq script:
+```bash
+./swiq <file>
+```
+
+## Variables
+
+Now let's see how we can create/update variables.
+
+### Normal Variables
+
+To create **readable** and **writeable**:
+
 ```swiq
 set var x = 5;
-log(x + 2);
-```
-Output:
-```
-7
 ```
 
-### State Archiving
-```swiq
-set var securityToken = 0x7F;
+* `set var` creates the variable
+* `x` is the variable name
+* `5` is the variable value
 
-archive securityToken;
-// log(securityToken); // ❌ Throws runtime exception: variable is archived.
+### Protected Variables
 
-restore securityToken;
-log(securityToken); // Output: 0x7F
-```
-
-### Interfaces and Layout Constraints
-```swiq
-set interface NetworkConfig = {
-     port: Number = 8080,
-     bitrate: Number<integerOnly>
-};
-
-// Allocate a typed object validated against the contract rules
-set var primarySocket = { bitrate: 9600 }<NetworkConfig>;
-log(primarySocket.port); // Output: 8080
-```
-
-### Functions and recursion
-```swiq
-func factorial(n) {
-    if (n <= 1) {
-        return 1;
-    }
-    return n * factorial(n - 1);
-}
-
-log(factorial(5));
-```
-Output:
-```
-120
-```
-
-### Closures
-
-By default, functions can only see their own parameters — no access to outer
-variables. Adding a name to the `[...]` list right after the parameter list
-gives that function read **and** write access to that one outer variable.
-Anything not listed stays invisible.
+To create protected variables, that are **read-only**:
 
 ```swiq
-set var counter = 0;
-
-func increment()[counter] {
-    set counter = counter + 1;
-    return counter;
-}
-
-log(increment());
-log(increment());
-log(counter);
-```
-Output:
-```
-1
-2
-2
+set var<Protected> x = 5;
 ```
 
-### Arrays and for loops
+* `set var` creates the variable
+* `<Protected>` protects the variable, making it *read-only*
+* `x` is the variable name
+* `5` is the variable value
+
+### Local/Global variables
+
+If the script would need to be imported to another script, you can choose what variables it can see and what variables it cannot:
+
 ```swiq
-set var arr = [10, 20, 30];
-push(arr, 40);
+set local var x = 5;
+```
 
-set var sum = 0;
-for (set var i = 0; i < len(arr); set i = i + 1) {
-    set sum = sum + arr[i];
-}
+* `set local var` creates the variable but it's local and only avaliable to the current script, not shown when imported
+* `x` is the variable name
+* `5` is the variable value
 
-log(sum);
+To make it **global** *(This is the default)*:
+
+```swiq
+set global var x = 5;
+```
+
+* `set global var` creates the variable globally
+* `x` is the variable name
+* `5` is the variable value
+
+### Changing a variable's value
+
+To change a variables value, that do not have `<Protected>` you have to just only use `set`:
+```swiq
+set x = 10
+```
+
+## Math
+
+Swiq supports multiplying (`*`), dividing (`/`), adding (`+`) and substracting (`-`)
+
+Examples:
+
+### Multiplying
+```swiq
+log(10 * 10);
 ```
 Output:
 ```
 100
 ```
 
-## Building
-
-```bash
-mkdir build && cd build
-cmake ..
-make
-./swiq ../examples/hello.swiq
+### Dividing
+```swiq
+log(6 / 2);
+```
+Output:
+```
+3
 ```
 
-To see version info:
-```bash
-./swiq -v
+### Adding
+```swiq
+log(5 + 5);
+```
+Output:
+```
+10
 ```
 
-## Status
+### Substracting
+```swiq
+log(10 - 5);
+```
 
-Early days — this is a learning project to understand how programming
-languages and compilers work, built one feature at a time: a lexer, a
-recursive-descent parser, and a tree-walking interpreter, all written in C++.
+**(More information comming soon)**
 
-Current limitations worth knowing about:
-- Functions are isolated by default — no closures except through the
-  explicit `[captures]` syntax.
-- No nested function declarations (functions must be declared at the top
-  level of a file).
+# Changelog
 
-## Repository Compliance Standards
-Swiq is configured according to professional open-source workflow standards. See our internal files for development guidelines:
-* **`CONTRIBUTING.md`** — Outlines our core Abstract Syntax Tree layout conventions and token processing architectures.
-* **`SECURITY.md`** — Outlines scope execution isolation parameters and security auditing focuses.
-* **`CODE_OF_CONDUCT.md`** — Details community contribution rules and etiquette standards.
+No published releases
+
+**(Swiq is still under-development)**

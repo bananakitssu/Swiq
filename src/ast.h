@@ -135,8 +135,11 @@ struct Stmt {
 struct VarDeclStmt : Stmt {
     std::string name;
     std::unique_ptr<Expr> value;
-    VarDeclStmt(std::string name, std::unique_ptr<Expr> value)
-        : name(std::move(name)), value(std::move(value)) {}
+    bool isProtected;
+    bool isLocal;
+    int line;
+    VarDeclStmt(std::string name, std::unique_ptr<Expr> value, bool isProtected, bool isLocal, int line)
+        : name(std::move(name)), value(std::move(value)), isProtected(isProtected), isLocal(isLocal), line(line) {}
 };
 
 // set x = <expr>;
@@ -183,6 +186,23 @@ struct IfStmt : Stmt {
         : condition(std::move(condition)),
           thenBranch(std::move(thenBranch)),
           elseBranch(std::move(elseBranch)) {}
+};
+
+// try { ... } or try { ... } catch (Error as e) { ... }
+struct TryStmt : Stmt {
+    std::vector<std::unique_ptr<Stmt>> tryBlock;
+    std::string errorVarName;
+    std::vector<std::unique_ptr<Stmt>> catchBlock;
+    int line;
+
+    TryStmt(std::vector<std::unique_ptr<Stmt>> tryBlock,
+            std::string errorVarName,
+            std::vector<std::unique_ptr<Stmt>> catchBlock,
+            int line)
+        : tryBlock(std::move(tryBlock)),
+          errorVarName(std::move(errorVarName)),
+          catchBlock(std::move(catchBlock)),
+          line(line) {}
 };
 
 // while (<cond>) { ... }

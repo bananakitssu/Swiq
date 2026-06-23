@@ -4,10 +4,10 @@
 
 Because Swiq is under active structural development, security fixes are rolled directly into the main execution engine trunk. We currently only officially support security updates for the latest build.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
-| < 1.0.0 | :x:                |
+| Version      | Supported          |
+| ------------ | ------------------ |
+| 1.0.0 BETA   | Yes		    |
+| Over 1.0.0   | No                 |
 
 ## Reporting a Vulnerability
 

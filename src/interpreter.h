@@ -2,6 +2,7 @@
 #include "ast.h"
 #include "value.h"
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <vector>
 #include <memory>
@@ -12,9 +13,13 @@ public:
 
 private:
     std::unordered_map<std::string, Value> variables;
+    std::unordered_set<std::string> local_variables;
     std::unordered_map<std::string, Value> archived_variables;
     std::unordered_map<std::string, Value> default_variables;
     std::unordered_map<std::string, const FuncDeclStmt*> functions;
+    std::unordered_map<std::string, bool> protected_variables;
+    
+    void executeTryStmt(const TryStmt* stmt);
 
     // Registered type/interface declarations, keyed by name.
     // Stored as plain copies since TypeDeclStmt owns its fields and the

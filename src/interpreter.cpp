@@ -36,10 +36,25 @@ void Interpreter::execute(const Stmt* stmt) {
     if (auto varDecl = dynamic_cast<const VarDeclStmt*>(stmt)) {
         variables[varDecl->name] = evaluate(varDecl->value.get());
         default_variables[varDecl->name] = evaluate(varDecl->value.get());
+        protected_variables[varDecl->name] = varDecl->isProtected;
+        if (varDecl->isLocal) {
+            local_variables.insert(varDecl->name);
+        } else {
+            local_variables.erase(varDecl->name);
+        }
+        return;
+    }
+    
+    if (auto tryStmt = dynamic_cast<const TryStmt*>(stmt)) {
+        executeTryStmt(tryStmt);
         return;
     }
 
     if (auto assign = dynamic_cast<const AssignStmt*>(stmt)) {
+        if (protected_variables[assign->name]) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+                                     ": cannot assign to protected variable '" + assign->name + "'");
+        }
         if (variables.find(assign->name) == variables.end()) {
             if (archived_variables.find(assign->name) != archived_variables.end()) {
                 throw std::runtime_error(
@@ -74,7 +89,12 @@ void Interpreter::execute(const Stmt* stmt) {
                 "Cannot delete an unknown variable. Error at line " + std::to_string(_delete->line)
             );
         }
+        if (protected_variables[_delete->name]) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(_delete->line) +
+                                     ": cannot delete protected variable '" + _delete->name + "'");
+        }
         variables.erase(_delete->name);
+        protected_variables.erase(_delete->name);
         return;
     }
     
@@ -679,4 +699,39 @@ Value Interpreter::constructTypedObject(const TypedObjectExpr* expr) {
     }
 
     return Value(obj);
+}
+
+void Interpreter::executeTryStmt(const TryStmt* stmt) {
+    try {
+        executeBlock(stmt->tryBlock);
+    } catch (const std::runtime_error& error) {
+        if (stmt->errorVarName.empty()) {
+            return;
+        }
+
+        bool hasOldValue = (variables.find(stmt->errorVarName) != variables.end());
+        Value oldValSaved;
+        if (hasOldValue) {
+            oldValSaved = variables[stmt->errorVarName];
+        }
+
+        variables[stmt->errorVarName] = Value(std::string(error.what()));
+
+        try {
+            executeBlock(stmt->catchBlock);
+        } catch (...) {
+            if (hasOldValue) {
+                variables[stmt->errorVarName] = oldValSaved;
+            } else {
+                variables.erase(stmt->errorVarName);
+            }
+            throw;
+        }
+
+        if (hasOldValue) {
+            variables[stmt->errorVarName] = oldValSaved;
+        } else {
+            variables.erase(stmt->errorVarName);
+        }
+    }
 }
