@@ -284,12 +284,12 @@ set var array = [10, 5];
 
 ### About creating an allocated array:
 
-Creating an allocated array was already stated in the `Functions -> Running built-in functions` section.
+Creating an allocated array was already stated in the `Functions -> Running built-in functions` section. Here's some notes:
 
-Notes:
-* When creating an allocated array would fill the array with `null` up to the size of the allocated array
-* The array would have the size limit
-* Push cannot work, it would throw an error
+> [!NOTE]
+> * When creating an allocated array would fill the array with `null` up to the size of the allocated array
+> * The array would have the size limit
+> * Push cannot work, it would throw an error
 
 **(More information comming soon)**
 
