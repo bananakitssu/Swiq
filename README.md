@@ -76,6 +76,8 @@ set var x = 5;
 * `x` is the variable name
 * `5` is the variable value
 
+---
+
 ### Protected Variables
 
 To create protected variables, that are **read-only**:
@@ -88,6 +90,8 @@ set var<Protected> x = 5;
 * `<Protected>` protects the variable, making it *read-only*
 * `x` is the variable name
 * `5` is the variable value
+
+---
 
 ### Local/Global variables
 
@@ -111,12 +115,16 @@ set global var x = 5;
 * `x` is the variable name
 * `5` is the variable value
 
+---
+
 ### Changing a variable's value
 
 To change a variables value, that do not have `<Protected>` you have to just only use `set`:
 ```swiq
 set x = 10;
 ```
+
+---
 
 ## Math
 
@@ -133,6 +141,8 @@ Output:
 100
 ```
 
+---
+
 ### Dividing
 ```swiq
 log(6 / 2);
@@ -141,6 +151,8 @@ Output:
 ```
 3
 ```
+
+---
 
 ### Adding
 ```swiq
@@ -151,6 +163,8 @@ Output:
 10
 ```
 
+---
+
 ### Substracting
 ```swiq
 log(10 - 5);
@@ -159,6 +173,8 @@ Output:
 ```
 5
 ```
+
+---
 
 ## Functions
 
@@ -180,6 +196,8 @@ func myFunction (arg1, arg2) {
 * `,` is the parameter separater
 * `arg2` is another parameter name
 
+---
+
 ### Creating a function (With access to outside variables)
 
 Creating a function with access to outside variables are different than functions without outside variable access:
@@ -197,6 +215,8 @@ func myFunction (arg1, arg2) [x] {
 * `arg2` is another parameter name
 * `x` is the outside variable that the function would have access to
 
+---
+
 ### Running a function
 
 Running a function is very easy, you just need to type:
@@ -208,6 +228,8 @@ myFunction("value1", "value2");
 * `myFunction` is the function name of what function to call
 * `"value1"` is the string to pass to the function for `arg1`
 * `"value2"` is the string to pass to the function for `arg2`
+
+---
 
 ### Running built-in functions
 
@@ -244,6 +266,8 @@ set var result = readFile("path/to/file.txt");
 ```
 * `"path/to/file.txt"` the path to the file
 
+---
+
 ## Arrays
 
 Now let's look at arrays:
@@ -255,6 +279,8 @@ set var array = [10, 5];
 ```
 * `10` is the first value in the array
 * `5` is the second value in the array
+
+---
 
 ### About creating an allocated array:
 
