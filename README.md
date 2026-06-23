@@ -297,5 +297,5 @@ Notes:
 
 No published releases
 
-> [!NOTE]
+> [!IMPORTANT]
 > Swiq is still under-development
