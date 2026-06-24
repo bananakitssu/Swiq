@@ -110,6 +110,9 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "catch") return Token{TokenType::CATCH, value};
     if (value == "local") return Token{TokenType::LOCAL, value};
     if (value == "global") return Token{TokenType::GLOBAL, value};
+    if (value == "switcher") return Token{TokenType::SWITCHER, value};
+    if (value == "is") return Token{TokenType::IS, value};
+    if (value == "destroy") return Token{TokenType::DESTROY, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }

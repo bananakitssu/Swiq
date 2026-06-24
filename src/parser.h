@@ -36,6 +36,8 @@ private:
     std::unique_ptr<Stmt> parseArchiveStmt();
     std::unique_ptr<Stmt> parseRestoreStmt();
     std::unique_ptr<Stmt> parseTryStmt();
+    std::unique_ptr<Stmt> parseSwitcherStmt();
+    std::unique_ptr<Stmt> parseDestroyStmt();
     std::unique_ptr<Stmt> parseTypeDecl(bool isInterface); // set type T = {...}; / set interface R = {...};
     std::unique_ptr<Stmt> parseResetStmt();
     TypeField parseTypeField(); // one "name: BaseType<modifier> = default" entry

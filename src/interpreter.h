@@ -30,6 +30,12 @@ private:
     struct ReturnSignal {
         Value value;
     };
+    
+    struct DestroySignal {};
+    
+    bool destroySwitcher = false;
+    
+    void executeSwitcherStmt(const SwitcherStmt* stmt);
 
     void registerFunctions(const std::vector<std::unique_ptr<Stmt>>& statements);
     void registerTypes(const std::vector<std::unique_ptr<Stmt>>& statements);

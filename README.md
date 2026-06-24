@@ -17,7 +17,8 @@ The syntax is similar to these languages:
 
 ## Downloading Swiq
 
-**(Note: You would need `cmake` and `make` installed)**
+> [!NOTE]
+> You would need `cmake` and `make` installed
 
 To download Swiq onto your device, download the ZIP file, extract it, then go into the extracted folder:
 
@@ -134,6 +135,7 @@ Examples:
 
 ### Multiplying
 ```swiq
+// 10 * 10
 log(10 * 10);
 ```
 Output:
@@ -145,6 +147,7 @@ Output:
 
 ### Dividing
 ```swiq
+// 6 / 2
 log(6 / 2);
 ```
 Output:
@@ -156,6 +159,7 @@ Output:
 
 ### Adding
 ```swiq
+// 5 + 5
 log(5 + 5);
 ```
 Output:
@@ -167,12 +171,15 @@ Output:
 
 ### Substracting
 ```swiq
+// 10 - 5
 log(10 - 5);
 ```
 Output:
 ```
 5
 ```
+
+Oh wait you might already know this—
 
 ---
 
@@ -291,7 +298,107 @@ Creating an allocated array was already stated in the `Functions -> Running buil
 > * The array would have the size limit
 > * Push cannot work, it would throw an error
 
-**(More information comming soon)**
+## Variable Memory Management
+
+Now let's see how to reset/delete/archive/restore variables:
+
+### Resetting a variable:
+
+You can reset a variable to it's initial value
+The initial value of a variable is the value used when creating the variable
+
+```swiq
+reset x;
+```
+* `reset` resets the given variable
+* `x` is the variable to be reset
+
+### Deleting a variable:
+
+This deletes the variable
+
+```swiq
+delete x;
+```
+* `delete` deletes the given variable
+* `x` is the variable to be deleted
+
+### Archiving a variable:
+
+Archiving a variable moves the variable into another space that your code can't find until you restore it
+
+```swiq
+archive x;
+```
+* `archive` archives the given variable
+* `x` is the variable to be archived
+
+### Restoring a variable:
+
+You can restore a variable after archiving it:
+
+```swiq
+restore x;
+```
+* `restore` restores the given variable
+* `x` is the variable to be restored
+
+## For loops / While loops / If blocks
+
+Now let's look at for/while loops and if blocks
+
+### For loops
+
+For loops runs until a **condition** (a true or false statement) is false
+
+Example:
+```swiq
+for (set var i = 0; i < 10; set i = i + 1) {
+  // code here
+}
+```
+* the `i` variable is the variable used by the for loop for **condition checking**
+* `i < 10` makes a comparison of if `i` is under 10, if not, the for loop will stop, if is, the for loop will continue
+* `set i = i + 1` changes `i` by 1 until it reaches 10
+
+> [!NOTE]
+> The for loop can get access to the `i` variable
+
+### While loops
+
+While loops is like for loops but ends if a variable is false
+
+Example:
+```swiq
+set var x = true;
+while (x) {
+  // code here
+}
+```
+> [!NOTE]
+> When using the while loop, you can use `true` or `false` instead of a variable:
+> ```swiq
+while (true) {
+  // code here
+}
+```
+
+### If blocks
+
+If blocks runs code if a **condition** is true
+
+Example:
+```swiq
+if (null == none) {
+  // code here
+}
+```
+* `null` means *"No value"*
+* `==` is comparing if the value on the left equals to the value on the right
+* `none` also means *"No value"*
+
+> [!NOTE]
+> More information comming soon
 
 # Changelog
 
