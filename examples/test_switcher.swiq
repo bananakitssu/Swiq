@@ -4,26 +4,21 @@ func print(l) {
     log(l);
 }
 
-// Test 1: String matching and destroy mechanics
 switcher(myVar):
   is "banana":
-    // This should NOT run
     print("Found banana");
     destroy;
   is "apple":
-    // This SHOULD run
     print("Found apple perfectly!");
     destroy;
-    print("ERROR: This line inside 'is' should be skipped by destroy!");
+    print("ERROR: This line inside 'is' should be skipped by destroy");
   is "orange":
     print("Found orange");
     destroy;
 
-// Test 2: Control flow fall-through verification
-print("Switcher exited cleanly to parent scope.");
+print("Switcher exited to parent scope.");
 
 set local var score = 100;
-// Test 3: Number matching
 switcher(score):
   is 50:
     print("Score is 50");
