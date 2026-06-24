@@ -224,6 +224,24 @@ func myFunction (arg1, arg2) [x] {
 
 ---
 
+### Function returns
+
+A function can return a value, example:
+
+```swiq
+func square(n) {
+  return n * n;
+}
+log(square(2));
+```
+This would output:
+```
+4
+```
+because `square` returns a number value
+
+---
+
 ### Running a function
 
 Running a function is very easy, you just need to type:
@@ -298,6 +316,8 @@ Creating an allocated array was already stated in the `Functions -> Running buil
 > * The array would have the size limit
 > * Push cannot work, it would throw an error
 
+---
+
 ## Variable Memory Management
 
 Now let's see how to reset/delete/archive/restore variables:
@@ -313,6 +333,8 @@ reset x;
 * `reset` resets the given variable
 * `x` is the variable to be reset
 
+---
+
 ### Deleting a variable:
 
 This deletes the variable
@@ -322,6 +344,8 @@ delete x;
 ```
 * `delete` deletes the given variable
 * `x` is the variable to be deleted
+
+---
 
 ### Archiving a variable:
 
@@ -333,6 +357,8 @@ archive x;
 * `archive` archives the given variable
 * `x` is the variable to be archived
 
+---
+
 ### Restoring a variable:
 
 You can restore a variable after archiving it:
@@ -342,6 +368,8 @@ restore x;
 ```
 * `restore` restores the given variable
 * `x` is the variable to be restored
+
+---
 
 ## For loops / While loops / If blocks
 
@@ -364,6 +392,8 @@ for (set var i = 0; i < 10; set i = i + 1) {
 > [!NOTE]
 > The for loop can get access to the `i` variable
 
+---
+
 ### While loops
 
 While loops is like for loops but ends if a variable is false
@@ -383,6 +413,8 @@ while (x) {
 > }
 > ```
 
+---
+
 ### If blocks
 
 If blocks runs code if a **condition** is true
@@ -399,6 +431,12 @@ if (null == none) {
 
 > [!NOTE]
 > More information comming soon
+
+---
+
+> [!IMPORTANT]
+> * You cannot have nested functions (a function in a function, will be a feature soon)
+> * You cannot capture all variables at once with just `[&]`, that will be a feature soon
 
 # Changelog
 
