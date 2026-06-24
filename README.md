@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/Swiq.svg" alt="Swiq Logo" width="250">
+  <img src="assets/swiq.beta.png" alt="Swiq Logo" width="250">
 </div>
 
 ---
@@ -12,6 +12,8 @@ The syntax is similar to these languages:
 * Kotlin
 * Lua/Luau
 * JavaScript/TypeScript
+
+---
 
 # Documentation
 
