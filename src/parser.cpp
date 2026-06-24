@@ -148,6 +148,14 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
     if (check(TokenType::TRY)) {
         return parseTryStmt();
     }
+    
+    if (check(TokenType::SWITCHER)) {
+        return parseSwitcherStmt();
+    }
+    
+    if (check(TokenType::DESTROY)) {
+        return parseDestroyStmt();
+    }
 
     // Generic expression used as a statement, e.g. push(arr, 5); or x.ConvertToNumber();
     // (the value, if any, is just discarded)
@@ -228,6 +236,56 @@ std::unique_ptr<Stmt> Parser::parseAssign() {
     auto value = parseExpr();
     expect(TokenType::SEMICOLON, "expected ';'");
     return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line);
+}
+
+std::unique_ptr<Stmt> Parser::parseSwitcherStmt() {
+    int startLine = current().line;
+    expect(TokenType::SWITCHER, "expected 'switcher'");
+    
+    expect(TokenType::LPAREN, "expected '(' after switcher");
+    auto controlExpr = parseExpr();
+    expect(TokenType::RPAREN, "expected ')' after switcher target");
+    
+    expect(TokenType::COLON, "expected ':' to start switcher block");
+
+    std::vector<SwitcherCase> cases;
+    
+    while (check(TokenType::IS)) {
+        advance();
+        
+        auto matchValue = parseExpr();
+        expect(TokenType::COLON, "expected ':' after case value");
+        
+        std::vector<std::unique_ptr<Stmt>> body;
+        int lastPos = pos;
+        while (!check(TokenType::IS) && !check(TokenType::END_OF_FILE) && !check(TokenType::RBRACE)) {
+            auto stmt = parseStatement();
+            
+            bool isDestroy = (dynamic_cast<DestroyStmt*>(stmt.get()) != nullptr);
+            
+            body.push_back(std::move(stmt));
+    
+            if (pos == lastPos) {
+                throw std::runtime_error("Unknown parser error at a token: " + current().value);
+            }
+            lastPos = pos;
+
+            if (isDestroy) {
+                break; 
+            }
+        }
+        
+        cases.push_back({std::move(matchValue), std::move(body)});
+    }
+
+    return std::make_unique<SwitcherStmt>(std::move(controlExpr), std::move(cases), startLine);
+}
+
+std::unique_ptr<Stmt> Parser::parseDestroyStmt() {
+    int line = current().line;
+    advance();
+    expect(TokenType::SEMICOLON, "expected ';'");
+    return std::make_unique<DestroyStmt>(line);
 }
 
 // Used only inside `for (...; ...; set i = i + 1)` — same as parseAssign but no trailing ';'

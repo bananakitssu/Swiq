@@ -32,6 +32,38 @@ void Interpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>>& stateme
     }
 }
 
+void Interpreter::executeSwitcherStmt(const SwitcherStmt* stmt) {
+    Value targetVal = evaluate(stmt->controlExpr.get());
+
+    for (const auto& c : stmt->cases) {
+        Value caseVal = evaluate(c.matchValue.get());
+        
+        bool match = false;
+        if (targetVal.data.index() == caseVal.data.index()) {
+            if (auto s1 = std::get_if<std::string>(&targetVal.data)) {
+                match = (*s1 == std::get<std::string>(caseVal.data));
+            } else if (auto i1 = std::get_if<long long>(&targetVal.data)) {
+                match = (*i1 == std::get<long long>(caseVal.data));
+            } else if (auto d1 = std::get_if<double>(&targetVal.data)) {
+                match = (*d1 == std::get<double>(caseVal.data));
+            } else if (auto b1 = std::get_if<bool>(&targetVal.data)) {
+                match = (*b1 == std::get<bool>(caseVal.data));
+            }
+        }
+
+        if (match) {
+            try {
+                for (const auto& caseStmt : c.body) {
+                    execute(caseStmt.get()); 
+                }
+            } catch (const DestroySignal&) {
+                break; 
+            }
+            break;
+        }
+    }
+}
+
 void Interpreter::execute(const Stmt* stmt) {
     if (auto varDecl = dynamic_cast<const VarDeclStmt*>(stmt)) {
         variables[varDecl->name] = evaluate(varDecl->value.get());
@@ -71,6 +103,14 @@ void Interpreter::execute(const Stmt* stmt) {
         }
         variables[assign->name] = evaluate(assign->value.get());
         return;
+    }
+    
+    if (auto switcher = dynamic_cast<const SwitcherStmt*>(stmt)) {
+        executeSwitcherStmt(switcher);
+        return;
+    }
+    if (auto _destroy = dynamic_cast<const DestroyStmt*>(stmt)) {
+        throw DestroySignal{};
     }
     
     if (auto reset = dynamic_cast<const ResetStmt*>(stmt)) {

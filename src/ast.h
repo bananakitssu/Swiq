@@ -205,6 +205,25 @@ struct TryStmt : Stmt {
           line(line) {}
 };
 
+struct SwitcherCase {
+    std::unique_ptr<Expr> matchValue;
+    std::vector<std::unique_ptr<Stmt>> body;
+};
+
+struct SwitcherStmt : Stmt {
+    std::unique_ptr<Expr> controlExpr;
+    std::vector<SwitcherCase> cases;
+    int line;
+
+    SwitcherStmt(std::unique_ptr<Expr> controlExpr, std::vector<SwitcherCase> cases, int line)
+        : controlExpr(std::move(controlExpr)), cases(std::move(cases)), line(line) {}
+};
+
+struct DestroyStmt : Stmt {
+    int line;
+    explicit DestroyStmt(int line) : line(line) {}
+};
+
 // while (<cond>) { ... }
 struct WhileStmt : Stmt {
     std::unique_ptr<Expr> condition;
