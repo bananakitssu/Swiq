@@ -378,10 +378,10 @@ while (x) {
 > [!NOTE]
 > When using the while loop, you can use `true` or `false` instead of a variable:
 > ```swiq
-while (true) {
-  // code here
-}
-```
+> while (true) {
+>   // code here
+> }
+> ```
 
 ### If blocks
 
