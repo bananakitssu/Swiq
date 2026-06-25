@@ -59,27 +59,29 @@ cp swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
 
 ---
 > [!TIP]
-> (This is if you have added Swiq to your system completely)
+> ***(This is if you have added Swiq to your system completely)***
 > 
 > You can run your Swiq file by:
 > ## MacOS / Linux
-> ### Adding a shebang at the top of the file:
+> 
+> ### 1. Adding a shebang at the top of the file:
 > ```swiq
 > #!/usr/local/bin/swiq
 > ```
 > 
-> ### Then Making it executable
+> ### 2. Then Making it executable
 > ```bash
 > chmod +x file_name.swiq
 > ```
 > 
-> ### Then running it with
+> ### 3. Then running it with
 > ```bash
 > ./file_name.swiq
 > ```
 > 
 > ## Windows
-> ### Just run it with Swiq
+> 
+> ### 1. Just run it with Swiq
 > ```bash
 > swiq ./file_name.swiq
 > ```
