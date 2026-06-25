@@ -1,17 +1,16 @@
 {
-  "name": "Swiq Language Playground",
+  "name": "Swiq Playground",
   "image": "mcr.microsoft.com/devcontainers/cpp:1-debian-12",
   
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-vscode.cpptools",
-        "ms-vscode.cmake-tools"
+        "ms-vscode.cpptools"
       ]
     }
   },
 
-  "postCreateCommand": "mkdir build && cd build && cmake .. && make",
+  "postCreateCommand": "mkdir -p build && cd build && cmake .. && make && sudo cp swiq /usr/local/bin/swiq",
 
   "remoteUser": "vscode"
 }
