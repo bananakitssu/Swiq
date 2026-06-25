@@ -1,0 +1,18 @@
+{
+  "contributes": {
+    "languages": [
+      {
+        "id": "swiq",
+        "aliases": ["Swiq", "swiq"],
+        "extensions": [".swiq"]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "swiq",
+        "scopeName": "source.swiq",
+        "path": "./swiq.tmLanguage.json"
+      }
+    ]
+  }
+}

@@ -2,7 +2,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Run Swiq Interpreter",
+      "label": "Run Swiq",
       "type": "shell",
       "command": "${workspaceFolder}/build/swiq",
       "args": [

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Swiq",
+  "scopeName": "source.swiq",
+  "patterns": [
+    {
+      "name": "comment.line.double-slash.swiq",
+      "match": "//.*$"
+    },
+    {
+      "name": "string.quoted.double.swiq",
+      "begin": "\"",
+      "end": "\""
+    },
+    {
+      "name": "keyword.control.memory.swiq",
+      "match": "\\b(reset|delete|archive|restore)\\b"
+    },
+    {
+      "name": "keyword.control.loop.swiq",
+      "match": "\\b(if|else|while|for|return)\\b"
+    },
+    {
+      "name": "storage.modifier.swiq",
+      "match": "\\b(set|var|local|global)\\b"
+    },
+    {
+      "name": "storage.type.modifier.swiq",
+      "match": "<(Protected)>"
+    },
+    {
+      "name": "storage.type.function.swiq",
+      "match": "\\bfunc\\b"
+    },
+    {
+      "name": "constant.language.swiq",
+      "match": "\\b(true|false|null|none)\\b"
+    },
+    {
+      "name": "support.function.builtin.swiq",
+      "match": "\\b(log|len|push|AllocatedArray|readFile)\\b"
+    },
+    {
+      "name": "constant.numeric.swiq",
+      "match": "\\b[0-9]+(\\.[0-9]+)?\\b"
+    }
+  ]
+}
