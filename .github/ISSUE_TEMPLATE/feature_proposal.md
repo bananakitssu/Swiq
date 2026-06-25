@@ -6,20 +6,27 @@ labels: enhancement
 assignees: ''
 ---
 
-## Is your feature request related to a problem?
-A clear description of what the limitation is (e.g., "I want a native way to do X without chaining string methods").
+# New Feature for Swiq
 
-## Proposed Syntax Architecture
-Show us how this feature would look in real `.swiq` script files:
-`swiq
-// Show your syntax design here
-`
+I want Swiq to have [feature]
 
-## Core Engine Implementation Ideas
-How do you visualize this changing the C++ codebase?
-- What token(s) need to be added to the Lexer?
-- How should the Parser represent this in the AST?
-- What does the Interpreter do with the state/variables during `evaluate()`?
+## Feature Explaination
 
-## Alternatives Considered
-Any alternative approaches or workarounds you've thought of.
+[explain]
+
+## Feature Usage Demonstration
+
+```swiq
+// give demonstration
+```
+
+## Other Information
+
+[other info]
+
+[WHAT TO CHANGE]: Change "[feature]" with the name of the feature you
+want Swiq to have. And then change "[explain]" with the explaination of
+that feature. And then change the code block code in "Feature Usage Demonstration"
+to how users can use that feature. You can change "[other info]" with some info you
+want. You can remove "Other Information". Also remove this "[WHAT TO CHANGE]" message
+when publishing this.

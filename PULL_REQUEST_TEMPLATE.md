@@ -1,7 +1,7 @@
 ##  What does this PR change?
-- 
+- (Type something here)
 
-## Related Architecture Impact
+## The Files Updated
 - [ ] `lexer.cpp` / `lexer.h`
 - [ ] `parser.cpp` / `parser.h`
 - [ ] `interpreter.cpp` / `interpreter.h`
@@ -11,5 +11,5 @@
 - [ ] Documentation / Examples
 
 ## Testing Checklist
-- [ ] Compiles cleanly with modern C++ standard flags.
+- [ ] Compiles with modern C++ standard flags.
 - [ ] Added a target `.swiq` test script reproducing the baseline fix or feature.
