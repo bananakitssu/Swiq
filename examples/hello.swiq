@@ -1,2 +1,3 @@
+#!/usr/local/bin/swiq
 set var x = 5;
 log(x + 2);

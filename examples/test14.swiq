@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 set var x = 5;
 archive x;
 log(x);

@@ -10,7 +10,7 @@
     }
   },
 
-  "postCreateCommand": "mkdir -p build && cd build && cmake .. && make && sudo cp swiq /usr/local/bin/swiq",
+  "postCreateCommand": "mkdir -p build && cd build && cmake .. && make && sudo cp swiq /usr/local/bin/swiq && cd ../",
 
   "remoteUser": "vscode"
 }

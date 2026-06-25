@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 @import "../examples/mathlib.swiq";
 
 log(square(7));

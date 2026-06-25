@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 set local var myVar = "apple";
 
 func print(l) {

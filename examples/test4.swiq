@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 // Functions
 func add(a, b) {
     return a + b;
