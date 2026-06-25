@@ -1,0 +1,27 @@
+{
+  "name": "swiq-lang",
+  "displayName": "Swiq Language Support",
+  "version": "1.0.0",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "swiq",
+        "aliases": ["Swiq", "swiq"],
+        "extensions": [".swiq"]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "swiq",
+        "scopeName": "source.swiq",
+        "path": "./swiq.tmLanguage.json"
+      }
+    ]
+  }
+}

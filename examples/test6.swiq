@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 // null / none / nil are all the same value
 log(null);
 log(none);

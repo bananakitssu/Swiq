@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 // ===== Floats and negatives =====
 set var f = 3.14;
 log(f);

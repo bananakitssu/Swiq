@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 // Hex literals are stored as text until explicitly converted
 set var h = 0x1F;
 log(h);

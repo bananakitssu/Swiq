@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 @import "./.swiq";
 
 log(y);

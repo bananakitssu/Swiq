@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 // Basic two-way closure: increment a captured counter
 set var counter = 0;
 

@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 log(72+1984+28-94849292*7362);
 
 set var x = 10;

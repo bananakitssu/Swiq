@@ -1,3 +1,4 @@
+#!/usr/local/bin/swiq
 set var<Protected> x = 5;
 try {
     set x = 10;

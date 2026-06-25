@@ -49,6 +49,42 @@ or to copy it, run:
 cp ./swiq to/another/directory
 ```
 
+or add it to your system completely (Works for MacOS or Linux):
+```swiq
+cp swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
+```
+
+> [!NOTE]
+> To get Swiq working on Windows, you will have to add ***Swiq*** to the *Environment Variables*
+
+---
+> [!TIP]
+> (This is if you have added Swiq to your system completely)
+> 
+> You can run your Swiq file by:
+> ## MacOS / Linux
+> ### Adding a shebang at the top of the file:
+> ```swiq
+> #!/usr/local/bin/swiq
+> ```
+> 
+> ### Then Making it executable
+> ```bash
+> chmod +x file_name.swiq
+> ```
+> 
+> ### Then running it with
+> ```bash
+> ./file_name.swiq
+> ```
+> 
+> ## Windows
+> ### Just run it with Swiq
+> ```bash
+> swiq ./file_name.swiq
+> ```
+---
+
 ## Swiq commands
 
 There are currently **2** commands in Swiq.
