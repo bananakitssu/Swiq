@@ -88,7 +88,7 @@ cp ./swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
 > (Similar to Linux)
 >
 > ### 1. Adding a shebang at the top of the file:
-```swiq
+> ```swiq
 > #!/data/data/com.termux/files/usr/bin/swiq
 > ```
 >
