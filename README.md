@@ -51,12 +51,17 @@ cp ./swiq to/another/directory
 
 or add it to your system completely (Works for MacOS or Linux):
 ```swiq
-cp swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
+cp ./swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
 ```
 
 > [!NOTE]
 > To get Swiq working on Windows, you will have to add ***Swiq*** to the *Environment Variables*
 
+> [!NOTE]
+> To get it in Android Termux, run:
+> ```bash
+> cp ./swiq /data/data/com.termux/files/usr/bin/swiq
+> ```
 ---
 > [!TIP]
 > ***(This is if you have added Swiq to your system completely)***
@@ -69,19 +74,37 @@ cp swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
 > #!/usr/local/bin/swiq
 > ```
 > 
-> ### 2. Then Making it executable
+> ### 2. Then Making it executable:
 > ```bash
-> chmod +x file_name.swiq
+> chmod +x ./file_name.swiq
 > ```
 > 
-> ### 3. Then running it with
+> ### 3. Then running it with:
+> ```bash
+> ./file_name.swiq
+> ```
+>
+> ## Termux
+> (Similar to Linux)
+>
+> ### 1. Adding a shebang at the top of the file:
+```swiq
+> #!/data/data/com.termux/files/usr/bin/swiq
+> ```
+>
+> ### 2. Then making it executable:
+> ```bash
+> chmod +x ./file_name.swiq
+> ```
+>
+> ### 3. Then running it with:
 > ```bash
 > ./file_name.swiq
 > ```
 > 
 > ## Windows
 > 
-> ### 1. Just run it with Swiq
+> ### 1. Just run it with Swiq:
 > ```bash
 > swiq ./file_name.swiq
 > ```
@@ -100,6 +123,12 @@ For running a Swiq script:
 ```bash
 ./swiq <file>
 ```
+> [!TIP]
+> Or
+> ```bash
+> swiq <file>
+> ```
+> If you added it to your device
 
 ## Variables
 
