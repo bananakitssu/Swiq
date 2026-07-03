@@ -4,6 +4,9 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
@@ -16,7 +19,9 @@ int main(int argc, char* argv[]) {
 
     // "-v" runs the built-in version script instead of a user file
     if (filepath == "-v") {
-        filepath = "../private_apis/version.swiq";
+	fs::path source_dir = SWIQ_SOURCE_DIR;
+        fs::path version_path = source_dir / "private_apis/version.swiq";
+        filepath = version_path.string();
     }
 
     std::ifstream file(filepath);

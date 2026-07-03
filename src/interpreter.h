@@ -39,8 +39,8 @@ private:
 
     void registerFunctions(const std::vector<std::unique_ptr<Stmt>>& statements);
     void registerTypes(const std::vector<std::unique_ptr<Stmt>>& statements);
-    void execute(const Stmt* stmt);
-    void executeBlock(const std::vector<std::unique_ptr<Stmt>>& statements);
+    void execute(const Stmt* stmt, int type = 0);
+    void executeBlock(const std::vector<std::unique_ptr<Stmt>>& statements, const int type = 0);
     Value evaluate(const Expr* expr);
     Value callFunction(const FuncDeclStmt* func, std::vector<Value> args, int callLine);
     Value callBuiltin(const std::string& name, std::vector<Value>& args, int line);

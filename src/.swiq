@@ -1,0 +1,7 @@
+func hi () {
+	destroy;
+	log("hi");
+}
+
+hi();
+log("2");

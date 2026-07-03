@@ -26,9 +26,9 @@ void Interpreter::registerFunctions(const std::vector<std::unique_ptr<Stmt>>& st
     }
 }
 
-void Interpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>>& statements) {
+void Interpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>>& statements, int type) {
     for (const auto& stmt : statements) {
-        execute(stmt.get());
+        execute(stmt.get(), type);
     }
 }
 
@@ -54,17 +54,17 @@ void Interpreter::executeSwitcherStmt(const SwitcherStmt* stmt) {
         if (match) {
             try {
                 for (const auto& caseStmt : c.body) {
-                    execute(caseStmt.get()); 
+                    execute(caseStmt.get(), 1);
                 }
             } catch (const DestroySignal&) {
-                break; 
+                break;
             }
             break;
         }
     }
 }
 
-void Interpreter::execute(const Stmt* stmt) {
+void Interpreter::execute(const Stmt* stmt, int type) {
     if (auto varDecl = dynamic_cast<const VarDeclStmt*>(stmt)) {
         variables[varDecl->name] = evaluate(varDecl->value.get());
         default_variables[varDecl->name] = evaluate(varDecl->value.get());
@@ -110,7 +110,13 @@ void Interpreter::execute(const Stmt* stmt) {
         return;
     }
     if (auto _destroy = dynamic_cast<const DestroyStmt*>(stmt)) {
-        throw DestroySignal{};
+	if (type == 1) {
+            throw DestroySignal{};
+	} else {
+	    throw std::runtime_error(
+		"Interpreter error at line " + std::to_string(_destroy->line) +
+		": cannot have 'destroy', it's for functions, switchers and try statements only.");
+	}
     }
     
     if (auto reset = dynamic_cast<const ResetStmt*>(stmt)) {
@@ -370,10 +376,12 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
 
     Value result;
     try {
-        executeBlock(func->body);
+        executeBlock(func->body, 1);
         result = Value(); // no explicit return statement was hit
     } catch (ReturnSignal& r) {
         result = r.value;
+    } catch (DestroySignal& d) {
+	result = "";
     } catch (...) {
         variables = std::move(savedVars);
         throw;
@@ -527,7 +535,7 @@ Value Interpreter::evaluate(const Expr* expr) {
         return it->second;
     }
 
-    if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
+    /*if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
         // First check if the object is a typed instance — if so, field access
         // takes priority over the static Swiq.__ENV__... path lookup.
         Value objVal = evaluate(mem->object.get());
@@ -551,7 +559,33 @@ Value Interpreter::evaluate(const Expr* expr) {
 
         throw std::runtime_error("Interpreter error at line " + std::to_string(mem->line) +
                                   ": unknown or inaccessible property '" + path + "'");
-    }
+    }*/
+
+	if (auto mem = dynamic_cast<const MemberExpr*>(expr)) {
+     	   // 1. Try the static Swiq.__ENV__... path lookup FIRST.
+           // getMemberPath only inspects the AST nodes statically; it won't trigger a variable lookup error.
+           std::string path = getMemberPath(mem);
+           static const std::unordered_map<std::string, Value> envMap = {
+               {"Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__", Value((long long)1)},
+               {"Swiq.__ENV__.__VERSION__.__BUILD_YEAR__",  Value((long long)2026)},
+           };
+           auto it = envMap.find(path);
+           if (it != envMap.end()) return it->second;
+
+           // 2. Fallback: If it's not a built-in static path, THEN evaluate it as a runtime object instance
+           Value objVal = evaluate(mem->object.get());
+           if (auto o = std::get_if<std::shared_ptr<TypedObject>>(&objVal.data)) {
+               Value* field = (*o)->find(mem->property);
+               if (!field) {
+                   throw std::runtime_error("Interpreter error at line " + std::to_string(mem->line) +
+                                             ": type '" + (*o)->typeName + "' has no field '" + mem->property + "'");
+               }
+               return *field;
+           }
+
+           throw std::runtime_error("Interpreter error at line " + std::to_string(mem->line) +
+                                  ": unknown or inaccessible property '" + path + "'");
+       }
 
     if (auto bin = dynamic_cast<const BinaryExpr*>(expr)) {
         Value left = evaluate(bin->left.get());
@@ -743,7 +777,7 @@ Value Interpreter::constructTypedObject(const TypedObjectExpr* expr) {
 
 void Interpreter::executeTryStmt(const TryStmt* stmt) {
     try {
-        executeBlock(stmt->tryBlock);
+        executeBlock(stmt->tryBlock, 1);
     } catch (const std::runtime_error& error) {
         if (stmt->errorVarName.empty()) {
             return;
@@ -758,7 +792,7 @@ void Interpreter::executeTryStmt(const TryStmt* stmt) {
         variables[stmt->errorVarName] = Value(std::string(error.what()));
 
         try {
-            executeBlock(stmt->catchBlock);
+            executeBlock(stmt->catchBlock, 1);
         } catch (...) {
             if (hasOldValue) {
                 variables[stmt->errorVarName] = oldValSaved;
