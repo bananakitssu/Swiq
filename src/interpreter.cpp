@@ -21,6 +21,12 @@ void Interpreter::registerTypes(const std::vector<std::unique_ptr<Stmt>>& statem
 void Interpreter::registerFunctions(const std::vector<std::unique_ptr<Stmt>>& statements) {
     for (const auto& stmt : statements) {
         if (auto func = dynamic_cast<const FuncDeclStmt*>(stmt.get())) {
+            if (functions.find(func->name) != functions.end()) {
+                if (func->overriding) {
+                    return;
+                }
+                throw std::runtime_error("Interpreter error at line " + std::to_string(func->line) + ": function '" + func->name + "' already defined.");
+            }
             functions[func->name] = func;
         }
     }
@@ -109,6 +115,7 @@ void Interpreter::execute(const Stmt* stmt, int type) {
         executeSwitcherStmt(switcher);
         return;
     }
+    
     if (auto _destroy = dynamic_cast<const DestroyStmt*>(stmt)) {
 	if (type == 1) {
             throw DestroySignal{};
@@ -222,6 +229,15 @@ void Interpreter::execute(const Stmt* stmt, int type) {
             execute(forStmt->post.get());
         }
         return;
+    }
+
+    if (auto funcDecl = dynamic_cast<const FuncDeclStmt*>(stmt)) {
+        if (functions.find(funcDecl->name) == functions.end()) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) + ": overriding function '" + funcDecl->name + "' which is not defined.");
+        }
+        if (funcDecl->overriding) {
+            functions[funcDecl->name] = funcDecl;
+        }
     }
 
     if (dynamic_cast<const TypeDeclStmt*>(stmt)) {

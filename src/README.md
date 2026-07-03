@@ -4,8 +4,18 @@ Version 1 is almost finished. Just need to add:
 
 * Function overriding
 * Function protection
-* Switcher (like `switch (myVar) {}`)
+* Switcher (like `switch (myVar) {}` but as `switcher (myVar):`)
+* Command execution
+* File writing
+* File deleting
+* File moving
+* File copying
 
 I am currently working on:
 
-* Switcher (Making this is hard right now)
+* Function protection
+
+Finished:
+
+* Switcher
+* Function overriding

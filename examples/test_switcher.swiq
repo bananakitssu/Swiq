@@ -12,7 +12,7 @@ switcher(myVar):
   is "apple":
     print("Found apple perfectly!");
     destroy;
-    print("ERROR: This line inside 'is' should be skipped by destroy");
+    //print("ERROR: This line inside 'is' should be skipped by destroy");
   is "orange":
     print("Found orange");
     destroy;

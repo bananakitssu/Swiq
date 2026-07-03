@@ -405,7 +405,12 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
 
 // func name(params)[captures] { body }
 std::unique_ptr<Stmt> Parser::parseFuncDecl() {
-    expect(TokenType::FUNC, "expected 'func'");
+    Token line = expect(TokenType::FUNC, "expected 'func'");
+    bool overriding = false;
+    if (check(TokenType::OVERRIDE)) {
+        advance();
+        overriding = true;
+    }
     Token name = expect(TokenType::IDENTIFIER, "expected function name");
     expect(TokenType::LPAREN, "expected '('");
 
@@ -433,7 +438,7 @@ std::unique_ptr<Stmt> Parser::parseFuncDecl() {
     }
 
     auto body = parseBlock();
-    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body));
+    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body), overriding, std::move(line.line));
 }
 
 // return [<expr>];

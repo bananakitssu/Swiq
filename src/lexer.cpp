@@ -113,6 +113,7 @@ Token Lexer::readIdentifierOrKeyword() {
     if (value == "switcher") return Token{TokenType::SWITCHER, value};
     if (value == "is") return Token{TokenType::IS, value};
     if (value == "destroy") return Token{TokenType::DESTROY, value};
+    if (value == "override") return Token{TokenType::OVERRIDE, value};
 
     return Token{TokenType::IDENTIFIER, value};
 }
