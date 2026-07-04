@@ -1,0 +1,112 @@
+{
+  "$schema": "https://githubusercontent.com",
+  "name": "Swiq",
+  "scopeName": "source.swiq",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#numbers" },
+    { "include": "#keywords" },
+    { "include": "#builtins" },
+    { "include": "#types-modifiers" },
+    { "include": "#directives" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.swiq",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.swiq",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.swiq",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.swiq",
+          "match": "\\b0x[0-9a-fA-F]+\\b"
+        },
+        {
+          "name": "constant.numeric.float.swiq",
+          "match": "\\b\\d+\\.\\d+\\b"
+        },
+        {
+          "name": "constant.numeric.integer.swiq",
+          "match": "\\b\\d+\\b"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "storage.modifier.swiq",
+          "match": "\\b(set|var|local|global)\\b"
+        },
+        {
+          "name": "keyword.control.memory.swiq",
+          "match": "\\b(delete|reset|archive|restore)\\b"
+        },
+        {
+          "name": "storage.type.function.swiq",
+          "match": "\\b(func|override)\\b"
+        },
+        {
+          "name": "keyword.control.flow.swiq",
+          "match": "\\b(for|while|if|switcher|is|try|catch|as|destroy|return)\\b"
+        },
+        {
+          "name": "constant.language.swiq",
+          "match": "\\b(true|false|null|none)\\b"
+        }
+      ]
+    },
+    "builtins": {
+      "patterns": [
+        {
+          "name": "support.function.builtin.swiq",
+          "match": "\\b(AllocatedArray|len|push|log|readFile)\\b"
+        },
+        {
+          "name": "support.function.method.swiq",
+          "match": "\\b\\.(ConvertToNumber)\\b"
+        }
+      ]
+    },
+    "types-modifiers": {
+      "patterns": [
+        {
+          "name": "storage.type.modifier.brackets.swiq",
+          "match": "(<)(Protected|floatOnly|integerOnly|Number|Array|String|Boolean)(>)"
+        },
+        {
+          "name": "entity.name.type.custom.swiq",
+          "match": "(<)([a-zA-Z_][a-zA-Z0-9_]*)(>)"
+        }
+      ]
+    },
+    "directives": {
+      "patterns": [
+        {
+          "name": "keyword.control.import.swiq",
+          "match": "@import\\b"
+        }
+      ]
+    }
+  }
+}
+
