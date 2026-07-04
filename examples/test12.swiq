@@ -1,6 +1,37 @@
-#!/usr/local/bin/swiq
-set var x = 5;
-log (x);
-delete x;
-//should error here:
-log(x);
+func hi () {
+  destroy;
+  log("hi");
+}
+
+hi();
+log("2");
+
+set var<Protected> x = 5;
+
+switcher(x):
+  is 1:
+    log("burp");
+    destroy;
+  is 2:
+    log("burp2");
+    destroy;
+  is 5:
+    log("burp5");
+    destroy;
+  is "hi":
+    log("burrrp");
+    destroy;
+
+log("burps again");
+
+func function2 () {
+  log("Hi");
+}
+
+function2();
+
+func override function2() {
+  log("Hey");
+}
+
+function2();

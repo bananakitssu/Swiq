@@ -217,7 +217,7 @@ void Interpreter::execute(const Stmt* stmt, int type) {
 
     if (auto whileStmt = dynamic_cast<const WhileStmt*>(stmt)) {
         while (isTruthy(evaluate(whileStmt->condition.get()))) {
-            executeBlock(whileStmt->body);
+            executeBlock(whileStmt->body, 1);
         }
         return;
     }
@@ -225,7 +225,7 @@ void Interpreter::execute(const Stmt* stmt, int type) {
     if (auto forStmt = dynamic_cast<const ForStmt*>(stmt)) {
         execute(forStmt->init.get());
         while (isTruthy(evaluate(forStmt->condition.get()))) {
-            executeBlock(forStmt->body);
+            executeBlock(forStmt->body, 1);
             execute(forStmt->post.get());
         }
         return;

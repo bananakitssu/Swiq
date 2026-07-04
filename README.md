@@ -323,6 +323,30 @@ myFunction("value1", "value2");
 * `"value1"` is the string to pass to the function for `arg1`
 * `"value2"` is the string to pass to the function for `arg2`
 
+### Overriding a function
+
+You can ***override*** a function, which changes how it behaves.
+
+Example:
+```swiq
+func myFunction() {
+  log("hi");
+}
+
+myFunction();
+
+func override myFunction() {
+  log("hey");
+}
+
+myFunction();
+```
+Output:
+```
+hi
+hey
+```
+
 ---
 
 ### Running built-in functions
@@ -497,6 +521,146 @@ if (null == none) {
 * `null` means *"No value"*
 * `==` is comparing if the value on the left equals to the value on the right
 * `none` also means *"No value"*
+
+The condition of `null == none` would be `true`
+
+---
+
+## Safe environments
+
+Now let's see how to run code in a safe environment
+
+### Try/Catch blocks
+
+You can use `try` to run code safely, if the code encounters an error, the entire script won't stop if that code was in a `try` block
+
+Example
+```swiq
+set var<Protected> x = 5;
+
+try {
+  set x = 2;
+}
+
+log(x);
+```
+The output would be just:
+```
+5
+```
+If it didn't have the try block, it would give an interpreter error and stop the entire script
+
+You can also get the error from the try block by adding a catch block:
+```swiq
+set var<Protected> x = 5;
+
+try {
+  set x = 2;
+} catch (Error as e) {
+  log(e);
+}
+
+log(x);
+```
+* `Error as e` creates a variable called `e` containing the error string.
+
+It will show the error, but it won't stop the script. The output would be:
+```
+Interpreter error at line 4: cannot assign to protected variable 'x'
+5
+```
+
+> [!NOTE]
+> In other programming languages, `catch` is required
+> But in ***Swiq***, the `catch` block is optional
+
+---
+
+## Code canceling
+
+Now let's see how to stop code
+
+### Destroy
+
+You can stop code using `destroy`
+
+Example:
+```swiq
+func hi() {
+  destroy;
+  log("hi");
+}
+
+hi();
+```
+Because there is `destroy;` in the function, `log("hi");` will *never* be called.
+
+---
+
+## Hex
+
+### Creating a hex variable
+
+You can make a hex variable by:
+```swiq
+set var hexVal = 0x3F;
+```
+or
+```swiq
+set var hexVal = "0x3F";
+```
+Both works
+
+### Converting a hex to a number
+
+You can convert a hex to a number by:
+```
+0x3F.ConvertToNumber()
+```
+That would give `63`
+
+Example:
+```
+set var hexVal = 0x3F;
+set vat hexString = "0x3F";
+
+log(hexVal);
+log(hexVal.ConvertToNumber());
+log(hexString);
+log(hexString.ConvertToNumber());
+```
+Output:
+```
+0x3F
+63
+0x3F
+63
+```
+
+---
+
+## Switchers
+
+Now let's see how to use a `switcher` without using `if`:
+
+Example:
+```swiq
+set var x = 2;
+
+switcher(x):
+  is 1:
+    log("Number 1");
+    destroy;
+  is 2:
+    log("Number 2");
+    destroy;
+```
+The expected output would be:
+```
+Number 2
+```
+
+---
 
 > [!NOTE]
 > More information comming soon
