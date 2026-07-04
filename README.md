@@ -625,6 +625,8 @@ Because there is `destroy;` in the function, `log("hi");` will *never* be called
 
 ## Hex
 
+Now let's see how to create/convert hex values
+
 ### Creating a hex variable
 
 You can make a hex variable by:
@@ -636,6 +638,8 @@ or
 set var hexVal = "0x3F";
 ```
 Both works
+
+---
 
 ### Converting a hex to a number
 
@@ -684,6 +688,114 @@ switcher(x):
 The expected output would be:
 ```
 Number 2
+```
+
+---
+
+## Module imports
+
+You can import modules by:
+
+```
+@import "<file-path>";
+```
+
+Example by importing `mathlib.swiq` from `examples/` in the Swiq directory:
+```swiq
+@import "./examples/mathlib.swiq";
+
+log(square(7));
+```
+
+---
+
+## Types and Interfaces
+
+Now let's see how to use/create Types and Interfaces:
+
+### Types
+
+You can create a `Type` by:
+```swiq
+set type myType = {
+  // ...
+}
+```
+* `type myType` creates a type called `myType`
+
+For a type with data, like a `Vector3`, you can do:
+```swiq
+set type Vector3 = {
+  x: Number<floatOnly>,
+  y: Number<floatOnly>,
+  z: Number<floatOnly>
+};
+```
+And use it by:
+```swiq
+{ x: 5.0, y: 2.1, z: 9.7 }<Vector3>;
+```
+Example:
+```swiq
+set type Vector3 = {
+  x: Number<floatOnly>,
+  y: Number<floatOnly>,
+  z: Number<floatOnly>
+};
+
+set var pos = { x: 5.0, y: 2.1, z: 9.7 }<Vector3>;
+log(pos);
+```
+Output:
+```
+{ x: 5.0, y: 2.1, z: 9.7 }
+```
+
+> [!IMPORTANT]
+> You cannot use default values in Types
+
+---
+
+### Interfaces
+
+Interfaces is quite similar to Types, but can have default values
+
+You can create an `interface` by:
+```swiq
+set interface myInterface = {
+  // ...
+}
+```
+* `interface myInterface` creates an interface called `myInterface`
+
+For an interface with data, like a `server` config, you can do:
+```swiq
+set interface ServerConfig = {
+  host: String = "http://localhost",
+  port: Number<integerOnly> = 8800
+};
+```
+And use it by:
+```swiq
+{ host: "anyUrl", port: 6291 }<ServerConfig>;
+```
+Or nothing for defaults:
+```swiq
+{}<ServerConfig>
+```
+Example:
+```swiq
+set interface ServerConfig = {
+  host: String = "http://localhost",
+  port: Number<integerOnly> = 8800
+};
+
+set var sc = { port: 5500 }<ServerConfig>;
+log(sc);
+```
+Output:
+```
+{ host: http://localhost, port: 5500 }
 ```
 
 ---
