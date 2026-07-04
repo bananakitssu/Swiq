@@ -375,6 +375,10 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
 
     // Bring in captured variables by their current value.
     for (const auto& name : func->captures) {
+	if (name == "all") {
+	    variables = std::move(savedVars);
+	    continue;
+	}
         auto it = savedVars.find(name);
         if (it == savedVars.end()) {
             variables = std::move(savedVars); // restore before throwing

@@ -1,5 +1,0 @@
-*.swiq linguist-language=Kotlin
-
-examples/*.swiq linguist-documentation=false
-examples/*.swiq linguist-detectable=true
-

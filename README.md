@@ -317,6 +317,15 @@ func myFunction (arg1, arg2) [x] {
 * `arg2` is another parameter name
 * `x` is the outside variable that the function would have access to
 
+> [!TIP]
+> If you want the function to get access to every variable, you can do:
+> ```swiq
+> func myFunction (arg1, arg2) [all] {
+>   // code here
+> }
+> ```
+> * `all` captures every avaliable variable.
+
 ---
 
 ### Function returns
@@ -807,4 +816,3 @@ Output:
 
 > [!IMPORTANT]
 > * You cannot have nested functions (a function in a function, will be a feature soon)
-> * You cannot capture all variables at once with just `[&]`, that will be a feature soon
