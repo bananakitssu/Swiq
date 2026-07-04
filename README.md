@@ -781,7 +781,7 @@ And use it by:
 ```
 Or nothing for defaults:
 ```swiq
-{}<ServerConfig>
+{}<ServerConfig>;
 ```
 Example:
 ```swiq
