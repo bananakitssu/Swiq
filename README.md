@@ -15,6 +15,15 @@ The syntax is similar to these languages:
 
 ---
 
+# Changelog
+
+No published releases
+
+> [!IMPORTANT]
+> Swiq is still under-development.
+
+---
+
 # Documentation
 
 ## Downloading Swiq
@@ -112,7 +121,7 @@ cp ./swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
 
 ## Swiq commands
 
-There are currently **2** commands in Swiq.
+There are currently **3** commands in Swiq.
 
 For getting the Swiq version:
 ```bash
@@ -123,11 +132,28 @@ For running a Swiq script:
 ```bash
 ./swiq <file>
 ```
+
+For running Swiq code without a file:
+```bash
+./swiq -c <code>
+```
+
 > [!TIP]
 > Or
 > ```bash
+> swiq -v
+> ```
+> 
+> And
+> ```bash
 > swiq <file>
 > ```
+> 
+> And
+> ```bash
+> swiq -c <code>
+> ```
+>
 > If you added it to your device
 
 ## Variables
@@ -571,8 +597,8 @@ Interpreter error at line 4: cannot assign to protected variable 'x'
 ```
 
 > [!NOTE]
-> In other programming languages, `catch` is required
-> But in ***Swiq***, the `catch` block is optional
+> In other programming languages, `catch` is required.
+> But in ***Swiq***, the `catch` block is optional.
 
 ---
 
@@ -670,10 +696,3 @@ Number 2
 > [!IMPORTANT]
 > * You cannot have nested functions (a function in a function, will be a feature soon)
 > * You cannot capture all variables at once with just `[&]`, that will be a feature soon
-
-# Changelog
-
-No published releases
-
-> [!IMPORTANT]
-> Swiq is still under-development
