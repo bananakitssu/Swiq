@@ -4,6 +4,10 @@
 
 ---
 
+![License](https://shields.io)
+
+---
+
 Swiq is a **programming language** made by *bananakitssu*
 
 The syntax is similar to these languages:
