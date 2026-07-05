@@ -8,11 +8,10 @@
     <a href="https://github.com/bananakitssu/Swiq/releases"><img alt="GitHub Release" src="https://img.shields.io/github/release/bananakitssu/Swiq.svg?color=ebc334"></a>
     <a href="https://github.com/bananakitssu/Swiq/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/bananakitssu/Swiq.svg"></a>
     <a href="https://github.com/bananakitssu/Swiq/blob/main/CODE_OF_CONDUCT.md"><img alt="Code of Conduct" src="https://img.shields.io/badge/Code%20of-Conduct-orange"></a>
+    <a href="https://github.com/bananakitssu/Swiq/blob/main/SECURITY.md"><img alt="Security" src="https://img.shields.io/badge/Security-green"></a>
+    <a href="https://github.com/bananakitssu/Swiq/blob/main/CONTRIBUTING.md"><img alt="Contributing" src="https://img.shields.io/badge/Contributing-blue"></a>
+    <a href="https://github.com/bananakitssu"><img alt="bananakitssu" src="https://img.shields.io/badge/Made%20by-bananakitssu-yellow"><\a>
 </p>
-
-[![Security](https://img.shields.io/badge/Security-green)](SECURITY.md)
-[![Contributions](https://img.shields.io/badge/Contributions-blue)](CONTRIBUTING.md)
-[![bananakitssu](https://img.shields.io/badge/Made%20by-bananakitssu-yellow)](https://github.com/bananakitssu)
 
 Swiq is a **programming language** made by *bananakitssu*
 
