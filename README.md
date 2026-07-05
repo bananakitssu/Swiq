@@ -5,6 +5,9 @@
 ---
 
 ![License](https://shields.io)
+[![Code of Conduct](https://shields.io)](CODE_OF_CONDUCT.md)
+[![Security](https://shields.io)](SECURITY.md)
+[![Contributions](https://shields.io)](CONTRIBUTING.md)
 
 ---
 
