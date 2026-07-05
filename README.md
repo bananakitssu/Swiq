@@ -578,6 +578,24 @@ if (null == none) {
 * `none` also means *"No value"*
 
 The condition of `null == none` would be `true`
+> [!TIP]
+> There are 3 no value items:
+> `null`, `nil` and `none`
+
+> [!TIP]
+> If a condition is false, it can move to a `else` block:
+> ```swiq
+> if (null == 2) {
+>   log("1");
+> } else {
+>   log("2");
+> }
+> ```
+> The output would be:
+> ```
+> 2
+> ```
+> Because `null == 2` is false
 
 ---
 
