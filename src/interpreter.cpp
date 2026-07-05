@@ -371,15 +371,29 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
     // explicitly listed [captures] are visible — everything else from the
     // outer scope is invisible by default.
     auto savedVars = std::move(variables);
+    /*auto savedFunctionss = std::move(functions);
+    auto savedDefaults = std::move(default_variables);
+    auto savedProtectedVars = std::move(protected_variables);
+    auto savedLocalVars = std::move(local_variables);
+    auto savedArchivedVars = std::move(archived_variables):*/
     variables = std::unordered_map<std::string, Value>();
+    /*default_variables = std::unordered_map<std::string, Value>();
+    archived_variables = std::unordered_map<std::string, Value>();
+    protected_variables = std::unordered_map<std::string, Value>();*/
 
     if (func->capturingAll) {
 	variables = std::move(savedVars);
+	/*default_variables = std::move(savedDefualts);
+	protected_variables = std::move(savedProtectedVars);
+	archived_variables = std::move(savedArchivedVars);
+	local_variables = std::move(savedLocalVars);*/
     }
 
     // Bring in captured variables by their current value.
     for (const auto& name : func->captures) {
         auto it = savedVars.find(name);
+	/*auto it2 = savedDefaults.find(name);
+	auto it3 = savedProtectedVars.find(name);*/
         if (it == savedVars.end()) {
             variables = std::move(savedVars); // restore before throwing
             throw std::runtime_error("Interpreter error at line " + std::to_string(callLine) +
