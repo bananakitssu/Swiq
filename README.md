@@ -6,9 +6,9 @@
 
 <p align="center">
     <a href="https://github.com/bananakitssu/Swiq/releases"><img alt="GitHub Release" src="https://img.shields.io/github/release/bananakitssu/Swiq.svg?color=ebc334"></a>
+    <a href="https://github.com/bananakitssu/Swiq/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/bananakitssu/Swiq.svg"></a>
 </p>
 
-[![License](https://img.shields.io/github/license/bananakitssu/Swiq)](LICENSE)
 [![Code of Conduct](https://img.shields.io/badge/Code%20Of-Conduct-orange)](CODE_OF_CONDUCT.md)
 [![Security](https://img.shields.io/badge/Security-green)](SECURITY.md)
 [![Contributions](https://img.shields.io/badge/Contributions-blue)](CONTRIBUTING.md)
