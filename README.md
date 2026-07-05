@@ -7,6 +7,7 @@
 <p align="center">
     <a href="https://github.com/bananakitssu/Swiq/releases"><img alt="GitHub Release" src="https://img.shields.io/github/release/bananakitssu/Swiq.svg?color=ebc334"></a>
 </p>
+
 [![License](https://img.shields.io/github/license/bananakitssu/Swiq)](LICENSE)
 [![Code of Conduct](https://img.shields.io/badge/Code%20Of-Conduct-orange)](CODE_OF_CONDUCT.md)
 [![Security](https://img.shields.io/badge/Security-green)](SECURITY.md)
