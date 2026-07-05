@@ -340,11 +340,11 @@ func myFunction (arg1, arg2) [x] {
 > [!TIP]
 > If you want the function to get access to every variable, you can do:
 > ```swiq
-> func myFunction (arg1, arg2) [all] {
+> func myFunction (arg1, arg2) [&] {
 >   // code here
 > }
 > ```
-> * `all` captures every avaliable variable.
+> * `&` captures every avaliable variable.
 
 ---
 
