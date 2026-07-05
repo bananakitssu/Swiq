@@ -21,6 +21,11 @@ The syntax is similar to these languages:
 
 ---
 
+Open in Codespaces:
+[![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bananakitssu/Swiq)
+
+---
+
 # Changelog
 
 No published releases
