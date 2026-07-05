@@ -10,8 +10,6 @@
 [![Contributions](https://img.shields.io/badge/Contributions-blue)](CONTRIBUTING.md)
 [![bananakitssu](https://img.shields.io/badge/Made%20by-bananakitssu-yellow)](https://github.com/bananakitssu)
 
----
-
 Swiq is a **programming language** made by *bananakitssu*
 
 The syntax is similar to these languages:
