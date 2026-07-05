@@ -10,9 +10,15 @@ namespace fs = std::filesystem;
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0] << " <source-file>" << std::endl;
-        std::cerr << "       " << argv[0] << " -v   (show version info)" << std::endl;
-        std::cerr << "       " << argv[0] << " -c <code>   (runs code)" << std::endl;
+        std::cerr << "Usage:" << std::endl;
+	std::cerr << ".________________________________________________." << std::endl;
+	std::cerr << "| Command           | Description                |" << std::endl;
+	std::cerr << "|-------------------|----------------------------|" << std::endl;
+	std::cerr << "| swiq <file>       | Runs a Swiq file.          |" << std::endl;
+        std::cerr << "| swiq -v           | Show version info.         |" << std::endl;
+        std::cerr << "| swiq -c <code>    | Runs code.                 |" << std::endl;
+	std::cerr << "| swiq -e <example> | Runs an example from Swiq. |" << std::endl;
+	std::cerr << "|___________________|____________________________|" << std::endl;
         return 1;
     }
 
@@ -24,6 +30,17 @@ int main(int argc, char* argv[]) {
         fs::path version_path = source_dir / "private_apis/version.swiq";
         filepath = version_path.string();
     }
+    
+    if (filepath == "-e") {
+	if (argc < 3) {
+	    std::cerr << "Expected example script name" << std::endl;
+	    return 1;
+	}
+	std::string example = argv[2];
+	fs::path exampleDirPath = SWIQ_SOURCE_DIR;
+	fs::path exampleFilePath = exampleDirPath / "examples" / (example + ".swiq");
+	filepath = exampleFilePath.string();
+   }
     
     if (filepath == "-c") {
         if (argc < 3) {

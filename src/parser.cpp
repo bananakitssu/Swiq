@@ -1,5 +1,6 @@
 #include "parser.h"
 #include <stdexcept>
+#include <iostream>
 #include <fstream>
 #include <sstream>
 
@@ -425,20 +426,31 @@ std::unique_ptr<Stmt> Parser::parseFuncDecl() {
     expect(TokenType::RPAREN, "expected ')'");
 
     std::vector<std::string> captures;
+    bool capturingAll = false;
     if (check(TokenType::LBRACKET)) {
         advance();
         if (!check(TokenType::RBRACKET)) {
-            captures.push_back(expect(TokenType::IDENTIFIER, "expected captured variable name").value);
-            while (check(TokenType::COMMA)) {
-                advance();
+	    if (check(TokenType::AND)) {
+		//std::cerr << "Found AND Token" << std::endl;
+		capturingAll = true;
+		advance();
+		while (check(TokenType::COMMA)) {
+		    advance();
+		    captures.push_back(expect(TokenType::IDENTIFIER, "expected captured variable name").value);
+		}
+	    } else {
                 captures.push_back(expect(TokenType::IDENTIFIER, "expected captured variable name").value);
-            }
+                while (check(TokenType::COMMA)) {
+                    advance();
+                    captures.push_back(expect(TokenType::IDENTIFIER, "expected captured variable name").value);
+                }
+	    }
         }
         expect(TokenType::RBRACKET, "expected ']'");
     }
 
     auto body = parseBlock();
-    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body), overriding, std::move(line.line));
+    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body), std::move(overriding), std::move(capturingAll), std::move(line.line));
 }
 
 // return [<expr>];

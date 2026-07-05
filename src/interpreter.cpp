@@ -373,12 +373,12 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
     auto savedVars = std::move(variables);
     variables = std::unordered_map<std::string, Value>();
 
+    if (func->capturingAll) {
+	variables = std::move(savedVars);
+    }
+
     // Bring in captured variables by their current value.
     for (const auto& name : func->captures) {
-	if (name == "all") {
-	    variables = std::move(savedVars);
-	    continue;
-	}
         auto it = savedVars.find(name);
         if (it == savedVars.end()) {
             variables = std::move(savedVars); // restore before throwing

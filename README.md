@@ -36,6 +36,16 @@ To download Swiq onto your device, download the ZIP file, extract it, then go in
 ```bash
 cd Swiq
 ```
+> [!TIP]
+> To download the Swiq folder or ZIP, you can go on the GitHub website, click the green button labeled as "Code" and click "Download ZIP". Or clone it with:
+> ```bash
+> git clone https://github.com/bananakitssu/Swiq
+> ```
+> 
+> If you downloaded the ZIP instead, you can unzip it with:
+> ```bash
+> unzip Swiq-main.zip -d swiq
+> ```
 
 Then make a new directory called `build` and go into that folder:
 
@@ -121,7 +131,7 @@ cp ./swiq /usr/local/bin/swiq && sudo chmod +x /usr/local/bin/swiq
 
 ## Swiq commands
 
-There are currently **3** commands in Swiq.
+There are currently **4** commands in Swiq.
 
 For getting the Swiq version:
 ```bash
@@ -138,6 +148,11 @@ For running Swiq code without a file:
 ./swiq -c <code>
 ```
 
+For running a Swiq example, from the `examples/` folder in the Swiq directory:
+```bash
+./swiq -e <example>
+```
+
 > [!TIP]
 > Or
 > ```bash
@@ -152,6 +167,11 @@ For running Swiq code without a file:
 > And
 > ```bash
 > swiq -c <code>
+> ```
+>
+> And
+> ```bash
+> swiq -e <example>
 > ```
 >
 > If you added it to your device

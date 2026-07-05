@@ -258,12 +258,13 @@ struct FuncDeclStmt : Stmt {
     std::vector<std::string> captures;
     std::vector<std::unique_ptr<Stmt>> body;
     bool overriding;
+    bool capturingAll;
     int line;
 
     FuncDeclStmt(std::string name, std::vector<std::string> params,
-                 std::vector<std::string> captures, std::vector<std::unique_ptr<Stmt>> body, bool overriding, int line)
+                 std::vector<std::string> captures, std::vector<std::unique_ptr<Stmt>> body, bool overriding, bool capturingAll, int line)
         : name(std::move(name)), params(std::move(params)),
-          captures(std::move(captures)), body(std::move(body)), overriding(overriding), line(std::move(line)) {}
+          captures(std::move(captures)), body(std::move(body)), overriding(std::move(overriding)), capturingAll(std::move(capturingAll)), line(std::move(line)) {}
 };
 
 // return [<expr>];
