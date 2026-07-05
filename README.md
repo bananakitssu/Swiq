@@ -5,7 +5,7 @@
 ---
 
 [![License](https://img.shields.io/github/license/bananakitssu/Swiq)](LICENSE)
-[![Code of Conduct](https://img.shields.io/badge/Conduct-orange)](CODE_OF_CONDUCT.md)
+[![Code of Conduct](https://img.shields.io/badge/Code%20Of-Conduct-orange)](CODE_OF_CONDUCT.md)
 [![Security](https://img.shields.io/badge/Security-green)](SECURITY.md)
 [![Contributions](https://img.shields.io/badge/Contributions-blue)](CONTRIBUTING.md)
 [![bananakitssu](https://img.shields.io/badge/Made%20by-bananakitssu-yellow)](https://github.com/bananakitssu)
