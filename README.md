@@ -44,7 +44,7 @@ cd Swiq
 > 
 > If you downloaded the ZIP instead, you can unzip it with:
 > ```bash
-> unzip Swiq-main.zip -d swiq
+> unzip Swiq-main.zip -d Swiq
 > ```
 
 Then make a new directory called `build` and go into that folder:
