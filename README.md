@@ -4,10 +4,10 @@
 
 ---
 
-![License](https://shields.io)
-[![Code of Conduct](https://shields.io)](CODE_OF_CONDUCT.md)
-[![Security](https://shields.io)](SECURITY.md)
-[![Contributions](https://shields.io)](CONTRIBUTING.md)
+[![License](img.shields.io/github/license/bananakitssu/Swiq)](LICENSE)
+[![Code of Conduct](https://img.shields.io/badge/Conduct-orange)](CODE_OF_CONDUCT.md)
+[![Security](https://img.shields.io/badge/Security-green)](SECURITY.md)
+[![Contributions](img.shields.io/badge/Contributions-blue)](CONTRIBUTING.md)
 
 ---
 
