@@ -16,4 +16,4 @@ jobs:
         run: "mkdir build && cd build && cmake .. && make"
 
       - name: Run test 1
-        run: "cp ./swiq ../ && cd ../ && ./swiq examples/hello.swiq"
+        run: "build/swiq examples/hello.swiq"
