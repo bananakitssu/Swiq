@@ -23,11 +23,12 @@ void Interpreter::registerFunctions(const std::vector<std::unique_ptr<Stmt>>& st
         if (auto func = dynamic_cast<const FuncDeclStmt*>(stmt.get())) {
             if (functions.find(func->name) != functions.end()) {
                 if (func->overriding) {
-                    return;
+                    continue;
                 }
                 throw std::runtime_error("Interpreter error at line " + std::to_string(func->line) + ": function '" + func->name + "' already defined.");
             }
             functions[func->name] = func;
+	    protected_functions[func->name] = func->isProtected;
         }
     }
 }
@@ -232,7 +233,10 @@ void Interpreter::execute(const Stmt* stmt, int type) {
     }
 
     if (auto funcDecl = dynamic_cast<const FuncDeclStmt*>(stmt)) {
-        if (functions.find(funcDecl->name) == functions.end()) {
+	if (protected_functions[funcDecl->name] && funcDecl->overriding) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) + ": cannot override a protected function.");
+	}
+        if (functions.find(funcDecl->name) == functions.end() && funcDecl->overriding) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) + ": overriding function '" + funcDecl->name + "' which is not defined.");
         }
         if (funcDecl->overriding) {

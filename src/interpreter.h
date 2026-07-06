@@ -17,6 +17,7 @@ private:
     std::unordered_map<std::string, Value> archived_variables;
     std::unordered_map<std::string, Value> default_variables;
     std::unordered_map<std::string, const FuncDeclStmt*> functions;
+    std::unordered_map<std::string, bool> protected_functions;
     std::unordered_map<std::string, bool> protected_variables;
     
     void executeTryStmt(const TryStmt* stmt);

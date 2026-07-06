@@ -407,9 +407,17 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
 std::unique_ptr<Stmt> Parser::parseFuncDecl() {
     Token line = expect(TokenType::FUNC, "expected 'func'");
     bool overriding = false;
+    bool isProtected = false;
     if (check(TokenType::OVERRIDE)) {
         advance();
         overriding = true;
+    } else if (check(TokenType::LESS)) {
+        if (peekNext().value == "Protected") {
+            advance();
+            advance();
+	    expect(TokenType::GREATER, "expected '>'");
+	    isProtected = true;
+	}
     }
     Token name = expect(TokenType::IDENTIFIER, "expected function name");
     expect(TokenType::LPAREN, "expected '('");
@@ -430,7 +438,6 @@ std::unique_ptr<Stmt> Parser::parseFuncDecl() {
         advance();
         if (!check(TokenType::RBRACKET)) {
 	    if (check(TokenType::AND)) {
-		//std::cerr << "Found AND Token" << std::endl;
 		capturingAll = true;
 		advance();
 		while (check(TokenType::COMMA)) {
@@ -449,7 +456,7 @@ std::unique_ptr<Stmt> Parser::parseFuncDecl() {
     }
 
     auto body = parseBlock();
-    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body), std::move(overriding), std::move(capturingAll), std::move(line.line));
+    return std::make_unique<FuncDeclStmt>(name.value, std::move(params), std::move(captures), std::move(body), std::move(overriding), std::move(capturingAll), std::move(isProtected), std::move(line.line));
 }
 
 // return [<expr>];
