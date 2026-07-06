@@ -13,9 +13,13 @@ Version 1 is almost finished. Just need to add:
 
 I am currently working on:
 
-* Function protection
+* File writing
+* File deleting
+* File moving
+* File copying
 
 Finished:
 
 * Switcher
 * Function overriding
+* Function protection
