@@ -23,10 +23,7 @@ The syntax is similar to these languages:
 * JavaScript/TypeScript
 
 ---
-
-Open in Codespaces:
 [![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/bananakitssu/Swiq)
-
 ---
 
 # Changelog
