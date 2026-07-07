@@ -390,6 +390,8 @@ myFunction("value1", "value2");
 * `"value1"` is the string to pass to the function for `arg1`
 * `"value2"` is the string to pass to the function for `arg2`
 
+---
+
 ### Overriding a function
 
 You can ***override*** a function, which changes how it behaves.
@@ -412,6 +414,17 @@ Output:
 ```
 hi
 hey
+```
+
+---
+
+### Protecting a function
+
+You can protect a function from being overriden by adding `<Protected>`:
+```swiq
+func<Protected> myFunction() {
+  log("hi");
+}
 ```
 
 ---
@@ -450,6 +463,16 @@ Reading a file:
 set var result = readFile("path/to/file.txt");
 ```
 * `"path/to/file.txt"` the path to the file
+
+Reading will make the variable, `result`, have the file content.
+
+Writing to a file:
+```swiq
+writeFile(".", "example.txt", "hello");
+```
+* `"."` the path to the file, this path means the current directory.
+* `"example.txt"` the file name.
+* `"hello"` the file content.
 
 ---
 

@@ -3,6 +3,9 @@
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 void Interpreter::run(const std::vector<std::unique_ptr<Stmt>>& statements) {
     registerFunctions(statements);
@@ -359,6 +362,37 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
         return Value(buffer.str());
     }
 
+    if (name == "writeFile") {
+	if (args.size() != 3) {
+	    throw std::runtime_error("Interpreter errror at line " + std::to_string(line) +
+				      ": writeFile() expects exactly 3 arguments (path, name, data)");
+	}
+	auto path = std::get_if<std::string>(&args[0].data);
+	auto name = std::get_if<std::string>(&args[1].data);
+	auto data = std::get_if<std::string>(&args[2].data);
+	if (!path) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": writeFile() requires a string path");
+	}
+	if (!name) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": writeFile() requires a string name");
+	}
+	if (!data) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": writeFile() requires file content as a string");
+	}
+	fs::path converted = fs::path(*path) / *name;
+	std::ofstream newFile(converted.string());
+	if (!newFile.is_open()) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": could not write to the file");
+	}
+	newFile << *data;
+	newFile.close();
+	return Value(); // No data
+    }
+
     throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                               ": unknown function '" + name + "'");
 }
@@ -548,7 +582,7 @@ Value Interpreter::evaluate(const Expr* expr) {
         }
 
         if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
-            call->callee == "readFile" || call->callee == "typeof") {
+            call->callee == "readFile" || call->callee == "writeFile" || call->callee == "typeof") {
             return callBuiltin(call->callee, args, call->line);
         }
 
