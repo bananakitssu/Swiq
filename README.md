@@ -496,6 +496,20 @@ copyFile(".", "..", "example.txt");
 * `".."` is where the file should duplicate and go to.
 * `"example.txt"` is the file name.
 
+Executing a command:
+```swiq
+// Linux
+exec("ls");
+
+// Windows
+exec("dir");
+```
+Linux:
+* `"ls"` is the command to be executed. Lists files in current working directory.
+
+Windows:
+* `"dir"` is the command to be executed. Lists filed also.
+
 ---
 
 ## Arrays

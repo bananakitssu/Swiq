@@ -4,6 +4,19 @@
 #include <fstream>
 #include <sstream>
 #include <filesystem>
+#include <cstdio>
+
+#if defined(_WIN32) || defined(_WIN64)
+    #define POPEN _popen
+    #define PCLOSE _pclose
+#elif defined(__APPLE__) || defined(__linux__)
+    #define POPEN popen
+    #define PCLOSE pclose
+    extern "C" FILE *popen(const char *command, const char *type);
+    extern "C" int pclose(FILE *stream);
+#else
+    #error "Unknown or unsupported Operating System"
+#endif
 
 namespace fs = std::filesystem;
 
@@ -475,6 +488,33 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 	return Value();
     }
 
+    if (name == "exec") {
+	if (args.size() != 1) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": exec() expects 1 argument (command)");
+	}
+	auto command = std::get_if<std::string>(&args[0].data);
+	if (!command) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": exec() requires a command string");
+	}
+	char buf[128];
+	std::string result = "";
+
+	FILE* pipe = POPEN(command->c_str(), "r");
+	if (!pipe) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": failed to execute command");
+	}
+
+	while(fgets(buf, sizeof(buf), pipe) != nullptr) {
+	    result += buf;
+	}
+
+	PCLOSE(pipe);
+	return Value(result);
+    }
+
     throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                               ": unknown function '" + name + "'");
 }
@@ -665,7 +705,8 @@ Value Interpreter::evaluate(const Expr* expr) {
 
         if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
             call->callee == "readFile" || call->callee == "writeFile" || call->callee == "delFile" ||
-	    call->callee == "moveFile" || call->callee == "copyFile" ||call->callee == "typeof") {
+	    call->callee == "moveFile" || call->callee == "copyFile" ||call->callee == "typeof" ||
+	    call->callee == "exec") {
             return callBuiltin(call->callee, args, call->line);
         }
 

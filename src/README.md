@@ -10,7 +10,7 @@ Version 1 is almost finished. Just need to add:
 * File deleting
 * File moving
 * File copying
-* `var++`, `var--`, `var**` (`var * var`), `var/=`, `var+=`, `var-=`, `var*=`
+* var math v2 `var++`, `var--`, `var**` (`var * var`), `var/=`, `var+=`, `var-=`, `var*=`
 
 And I need to improve:
 
@@ -19,7 +19,7 @@ And I need to improve:
 
 I am currently working on:
 
-* Command execution
+* var math v2
 
 Finished:
 
@@ -30,3 +30,4 @@ Finished:
 * File moving
 * File deleting
 * File copying
+* Command execution
