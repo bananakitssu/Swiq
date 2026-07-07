@@ -2,29 +2,48 @@
 
 ## Supported Versions
 
-Because Swiq is under active structural development, security fixes are rolled directly into the main execution engine trunk. We currently only officially support security updates for the latest build.
+Swiq is currently under active development.
 
-| Version      | Supported          |
-| ------------ | ------------------ |
-| 1.0.0 BETA   | Yes		    |
-| Over 1.0.0   | No                 |
+At this time, only the latest commit on the `main` branch is officially supported.
+
+---
 
 ## Reporting a Vulnerability
 
-We take the safety of the Swiq runtime engine seriously. If you find a security flaw—particularly engine exploits, arbitrary code execution via memory unsafe handlers, or host machine isolation breaches—please do not open a public GitHub issue.
+If you discover a security vulnerability, please **do not** create a public GitHub issue.
 
-Please report security vulnerabilities by opening a private draft security advisory directly through the repository or by contacting the maintainer via GitHub/development communication channels.
+Instead:
 
-### What to Include in a Report:
-1. **Description:** A detailed summary of the vulnerability and its potential impact.
-2. **PoC Exploit:** A minimal `.swiq` source script or specialized token stream that reproduces the behavior.
-3. **Environment:** Details on your environment (e.g., Termux on Android, Windows, C++ compiler version used to build the interpreter).
+- Open a private GitHub Security Advisory if available.
+- Or contact the maintainer privately.
 
-You can expect an acknowledgment within 48 hours, followed by updates as a patch is triaged and developed.
+Please include:
 
-## Target Security Focus Areas
+- A description of the vulnerability.
+- Steps to reproduce it.
+- Proof of concept (if applicable).
+- Suggested mitigation (optional).
 
-When auditing or fuzzing the Swiq implementation, please keep an eye out for these system-specific vectors:
-* **Scope Leakage in Captures:** Ensuring that functions executing in isolated environments with explicit `[...]` capture blocks cannot implicitly leak or manipulate out-of-scope pointers or variables.
-* **Archive State Bypasses:** Expliting edge cases in the `Parser` or `Interpreter` where an `archive x;` variable state can be evaluated or assigned to without an explicit `restore`.
-* **File System Traversal:** Exploits involving the `@import` directive or `readFile()` builtin that allow reading files outside of the intended execution directory.
+---
+
+## Response Process
+
+After receiving a report, the maintainer will:
+
+1. Confirm receipt.
+2. Investigate the issue.
+3. Develop a fix if necessary.
+4. Release the fix.
+5. Credit the reporter if they wish to be acknowledged.
+
+---
+
+## Responsible Disclosure
+
+Please avoid publicly disclosing security vulnerabilities until a fix has been released.
+
+This helps protect users while the issue is being addressed.
+
+---
+
+Thank you for helping keep Swiq secure.
