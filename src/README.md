@@ -19,7 +19,6 @@ And I need to improve:
 
 I am currently working on:
 
-* File deleting
 * File copying
 
 Finished:
@@ -29,3 +28,4 @@ Finished:
 * Function protection
 * File writing
 * File moving
+* File deleting
