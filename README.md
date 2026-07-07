@@ -10,7 +10,7 @@
     <a href="https://github.com/bananakitssu/Swiq/blob/main/CODE_OF_CONDUCT.md"><img alt="Code of Conduct" src="https://img.shields.io/badge/code%20of-conduct-orange"></a>
     <a href="https://github.com/bananakitssu/Swiq/blob/main/SECURITY.md"><img alt="Security" src="https://img.shields.io/badge/security-policy-green"></a>
     <a href="https://github.com/bananakitssu/Swiq/blob/main/CONTRIBUTING.md"><img alt="Contributing" src="https://img.shields.io/badge/contributing%20to-Swiq-blue"></a>
-    <a href="https://github.com/bananakitssu"><img alt="bananakitssu" src="https://img.shields.io/badge/made%20by-bananakitssu-yellow"></a>
+    <a href="https://github.com/bananakitssu"><img alt="bananakitssu" src="https://img.shields.io/badge/by-bananakitssu-yellow?logo=github&style=for-the-badge"></a>
 </p>
 
 Swiq is a **programming language** made by *bananakitssu*
@@ -473,6 +473,19 @@ writeFile(".", "example.txt", "hello");
 * `"."` the path to the file, this path means the current directory.
 * `"example.txt"` the file name.
 * `"hello"` the file content.
+
+Moving a file to another location:
+```swiq
+moveFile("./example.txt", "../example.txt");
+```
+* `"./example.txt"` is the file `example.txt` in the current directory.
+* `"../example.txt"` is where the file should go to, outside of the current directory.
+
+Deleting a file:
+```swiq
+delFile("./example.txt");
+```
+* `"./example.txt"` is the file to be deleted.
 
 ---
 

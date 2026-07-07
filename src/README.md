@@ -10,11 +10,16 @@ Version 1 is almost finished. Just need to add:
 * File deleting
 * File moving
 * File copying
+* `var++`, `var--`, `var**` (`var * var`), `var/=`, `var+=`, `var-=`, `var*=`
+
+And I need to improve:
+
+* Importing
+* Variable creation
 
 I am currently working on:
 
 * File deleting
-* File moving
 * File copying
 
 Finished:
@@ -23,3 +28,4 @@ Finished:
 * Function overriding
 * Function protection
 * File writing
+* File moving

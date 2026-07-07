@@ -393,6 +393,54 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 	return Value(); // No data
     }
 
+    if (name == "delFile") {
+	if (args.size() != 1) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": delFile() expects exactly 1 argument (path)");
+	}
+	auto path = std::get_if<std::string>(&args[0].data);
+	if (!path) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": delFile() requires a string path");
+	}
+	auto result = false;
+	try {
+	    if (fs::remove(fs::path(*path))) {
+		result = true;
+	    } else {
+		result = false;
+	    }
+	} catch (fs::filesystem_error& e) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": failed to delete file: " + e.what());
+	}
+	return Value(result);
+    }
+
+    if (name == "moveFile") {
+	if (args.size() != 2) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": moveFile() expects 2 arguments (fromPath, toPath)");
+	}
+	auto path1 = std::get_if<std::string>(&args[0].data);
+	auto path2 = std::get_if<std::string>(&args[1].data);
+	if (!path1) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": moveFile() requires a string path for where the file is");
+	}
+	if (!path2) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": moveFile() requires a string path for where to put the file");
+	}
+	std::error_code ec;
+	fs::rename(fs::path(*path1), fs::path(*path2), ec);
+	if (ec) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": failed to move file: " + ec.message());
+	}
+	return Value();
+    }
+
     throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                               ": unknown function '" + name + "'");
 }
@@ -582,7 +630,8 @@ Value Interpreter::evaluate(const Expr* expr) {
         }
 
         if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
-            call->callee == "readFile" || call->callee == "writeFile" || call->callee == "typeof") {
+            call->callee == "readFile" || call->callee == "writeFile" || call->callee == "delFile" ||
+	    call->callee == "moveFile" || call->callee == "typeof") {
             return callBuiltin(call->callee, args, call->line);
         }
 
@@ -750,6 +799,8 @@ Value Interpreter::evaluate(const Expr* expr) {
         if (op == ">")  return Value(l > r);
         if (op == "<=") return Value(l <= r);
         if (op == ">=") return Value(l >= r);
+	if (op == "+=") return Value(l += r);
+	if (op == "-=") return Value(l -= r);
 
         throw std::runtime_error("Interpreter error at line " + std::to_string(bin->line) +
                                   ": unknown operator '" + op + "'");
