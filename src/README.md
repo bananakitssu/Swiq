@@ -19,7 +19,7 @@ And I need to improve:
 
 I am currently working on:
 
-* File copying
+* Command execution
 
 Finished:
 
@@ -29,3 +29,4 @@ Finished:
 * File writing
 * File moving
 * File deleting
+* File copying

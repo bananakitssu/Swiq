@@ -476,16 +476,25 @@ writeFile(".", "example.txt", "hello");
 
 Moving a file to another location:
 ```swiq
-moveFile("./example.txt", "../example.txt");
+moveFile(".", "..", "example.txt);
 ```
-* `"./example.txt"` is the file `example.txt` in the current directory.
-* `"../example.txt"` is where the file should go to, outside of the current directory.
+* `"."` is where file `example.txt` is in the current directory.
+* `".."` is where the file should go to, outside of the current directory.
+* `"example.txt"` is the file name.
 
 Deleting a file:
 ```swiq
 delFile("./example.txt");
 ```
 * `"./example.txt"` is the file to be deleted.
+
+Copying a file to another directory:
+```swiq
+copyFile(".", "..", "example.txt");
+```
+* `"."` is where the file is.
+* `".."` is where the file should duplicate and go to.
+* `"example.txt"` is the file name.
 
 ---
 

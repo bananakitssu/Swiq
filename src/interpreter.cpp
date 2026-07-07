@@ -410,7 +410,7 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 	    } else {
 		result = false;
 	    }
-	} catch (fs::filesystem_error& e) {
+	} catch (const fs::filesystem_error& e) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": failed to delete file: " + e.what());
 	}
@@ -418,12 +418,13 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
     }
 
     if (name == "moveFile") {
-	if (args.size() != 2) {
+	if (args.size() != 3) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
-				      ": moveFile() expects 2 arguments (fromPath, toPath)");
+				      ": moveFile() expects 2 arguments (fromPath, toPath, name)");
 	}
 	auto path1 = std::get_if<std::string>(&args[0].data);
 	auto path2 = std::get_if<std::string>(&args[1].data);
+	auto name = std::get_if<std::string>(&args[2].data);
 	if (!path1) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": moveFile() requires a string path for where the file is");
@@ -432,11 +433,44 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": moveFile() requires a string path for where to put the file");
 	}
+	if (!name) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": moveFile() requires a string name");
+	}
 	std::error_code ec;
-	fs::rename(fs::path(*path1), fs::path(*path2), ec);
+	fs::rename(fs::path(*path1) / *name, fs::path(*path2) / *name, ec);
 	if (ec) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": failed to move file: " + ec.message());
+	}
+	return Value();
+    }
+
+    if (name == "copyFile") {
+	if (args.size() != 3) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": copyFile() expects 3 arguments (fromPath, name, pastePath)");
+	}
+	auto path1 = std::get_if<std::string>(&args[0].data);
+	auto path2 = std::get_if<std::string>(&args[2].data);
+	auto name = std::get_if<std::string>(&args[1].data);
+	if (!path1) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": copyFile() requires a string \"from\" path");
+	}
+	if (!path2) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": copyFile() requires a string \"destination\" path");
+	}
+	if (!name) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": copyFile() requires a string file name");
+	}
+	try {
+	    fs::copy_file(fs::path(*path1) / *name, fs::path(*path2) / *name, fs::copy_options::overwrite_existing);
+	} catch (const fs::filesystem_error& e) {
+	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+				      ": failed to copy file: " + e.what());
 	}
 	return Value();
     }
@@ -631,7 +665,7 @@ Value Interpreter::evaluate(const Expr* expr) {
 
         if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
             call->callee == "readFile" || call->callee == "writeFile" || call->callee == "delFile" ||
-	    call->callee == "moveFile" || call->callee == "typeof") {
+	    call->callee == "moveFile" || call->callee == "copyFile" ||call->callee == "typeof") {
             return callBuiltin(call->callee, args, call->line);
         }
 
