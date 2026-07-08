@@ -240,6 +240,11 @@ std::unique_ptr<Stmt> Parser::parseAssign() {
 	    assign_type = 1;
 	    advance();
 	    expect(TokenType::SEMICOLON, "expected ';'");
+	} else if (check(TokenType::EQUALS)) {
+	    assign_type = 2;
+	    advance();
+	    value = parseExpr();
+	    expect(TokenType::SEMICOLON, "expected ';'");
 	} else {
 	    throw std::runtime_error("Parser error at line " + std::to_string(current().line) + ": expected '=' or '+' after '+' (var++ or var+=)");
 	}

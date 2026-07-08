@@ -133,6 +133,23 @@ void Interpreter::execute(const Stmt* stmt, int type) {
 		throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
 					  ": cannot use '++' on a non-Number variable");
 	    }
+	} else if (assign->assign_type == 2) {
+	    if (typeNameOf(variables[assign->name]) == "Number") {
+		if (typeNameOf(evaluate(assign->value.get())) != "Number") {
+		    throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+					      ": cannot use '+=', cannot add Number += " + typeNameOf(evaluate(assign->value.get())) + ", expected Number += Number");
+		}
+		variables[assign->name].data = std::get<long long>(variables[assign->name].data) + std::get<long long>(evaluate(assign->value.get()).data);
+	    } else if (typeNameOf(variables[assign->name]) == "String") {
+		if (typeNameOf(evaluate(assign->value.get())) != "String") {
+		    throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+					      ": cannot use '+=', cannot add String += " + typeNameOf(evaluate(assign->value.get())) + ", expected String += String");
+		}
+		variables[assign->name].data = std::get<std::string>(variables[assign->name].data) + std::get<std::string>(evaluate(assign->value.get()).data);
+	    } else {
+		throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+					  ": cannot use '+=' on a variable that isn't a String or Number");
+	    }
 	}
         return;
     }
@@ -700,7 +717,29 @@ Value Interpreter::evaluate(const Expr* expr) {
                 throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
                                           ": '" + *s + "' is not a valid number for ConvertToNumber()");
             }
-        }
+        } else if (mcall->method == "ToString") {
+	    if (!mcall->args.empty()) {
+		throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+					  ": ToString() takes no arguments");
+	    }
+	    auto s1 = std::get_if<long long>(&obj.data);
+	    if (!s1) {
+		throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+					  ": ToString() can only be called on a non-String variable");
+	    }
+	    try {
+		std::string data;
+		if (s1) {
+		    std::stringstream ss;
+		    ss << *s1;
+		    data = ss.str();
+		}
+		return Value(data);
+	    } catch (const std::exception&) {
+		throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+					  ": '" + std::to_string(*s1) + "' is not a valid non-String variable for ToString()");
+	    }
+	}
 
         throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
                                   ": unknown method '" + mcall->method + "'");

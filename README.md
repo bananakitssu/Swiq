@@ -261,6 +261,22 @@ You can add an additional `1` to a variable (`set var = var + 1;`) like this:
 set x++;
 ```
 
+You can also add by:
+```swiq
+set x += 5;
+```
+
+You can add more string to another string by:
+```swiq
+set var x = "hello";
+set x += ", world!";
+log(x);
+```
+Output:
+```
+hello, world!
+```
+
 ---
 
 ## Math
@@ -793,6 +809,18 @@ Output:
 0x3F
 63
 ```
+
+---
+
+## Number -> String
+
+Now let's see how to turn a Number into a String
+
+You can do this by:
+```swiq
+5.ToString()
+```
+`5` will become `"5"`.
 
 ---
 
