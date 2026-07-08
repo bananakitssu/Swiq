@@ -254,6 +254,15 @@ set x = 10;
 
 ---
 
+### Math on a variable
+
+You can add an additional `1` to a variable (`set var = var + 1;`) like this:
+```swiq
+set x++;
+```
+
+---
+
 ## Math
 
 Swiq supports multiplying (`*`), dividing (`/`), adding (`+`) and substracting (`-`)

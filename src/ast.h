@@ -147,8 +147,9 @@ struct AssignStmt : Stmt {
     std::string name;
     std::unique_ptr<Expr> value;
     int line;
-    AssignStmt(std::string name, std::unique_ptr<Expr> value, int line)
-        : name(std::move(name)), value(std::move(value)), line(line) {}
+    int assign_type;
+    AssignStmt(std::string name, std::unique_ptr<Expr> value, int line, int assign_type)
+        : name(std::move(name)), value(std::move(value)), line(line), assign_type(assign_type) {}
 };
 
 // set arr[index] = <expr>;

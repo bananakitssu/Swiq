@@ -228,14 +228,27 @@ std::unique_ptr<Stmt> Parser::parseVarDecl() {
     return std::make_unique<VarDeclStmt>(name.value, std::move(value), isProtected, isLocal, startLine);
 }
 
-// set x = <expr>;
+// set x = <expr>; or set x++;
 std::unique_ptr<Stmt> Parser::parseAssign() {
     Token setTok = expect(TokenType::SET, "expected 'set'");
     Token name = expect(TokenType::IDENTIFIER, "expected variable name");
-    expect(TokenType::EQUALS, "expected '='");
-    auto value = parseExpr();
-    expect(TokenType::SEMICOLON, "expected ';'");
-    return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line);
+    int assign_type = 0;
+    std::unique_ptr<Expr> value = nullptr;
+    if (check(TokenType::PLUS)) {
+	advance();
+	if (check(TokenType::PLUS)) {
+	    assign_type = 1;
+	    advance();
+	    expect(TokenType::SEMICOLON, "expected ';'");
+	} else {
+	    throw std::runtime_error("Parser error at line " + std::to_string(current().line) + ": expected '=' or '+' after '+' (var++ or var+=)");
+	}
+    } else {
+	expect(TokenType::EQUALS, "expected '='");
+	value = parseExpr();
+	expect(TokenType::SEMICOLON, "expected ';'");
+    }
+    return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line, assign_type);
 }
 
 std::unique_ptr<Stmt> Parser::parseSwitcherStmt() {
@@ -294,7 +307,8 @@ std::unique_ptr<Stmt> Parser::parseAssignNoSemicolon() {
     Token name = expect(TokenType::IDENTIFIER, "expected variable name");
     expect(TokenType::EQUALS, "expected '='");
     auto value = parseExpr();
-    return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line);
+    int assign_type = 0;
+    return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line, assign_type);
 }
 
 // set arr[index] = <expr>;

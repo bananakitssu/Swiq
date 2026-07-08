@@ -124,7 +124,16 @@ void Interpreter::execute(const Stmt* stmt, int type) {
                 ": cannot assign to archived variable '" + assign->name +
                 "'. Use 'restore' to unarchive it.");
         }
-        variables[assign->name] = evaluate(assign->value.get());
+	if (assign->assign_type == 0) {
+            variables[assign->name] = evaluate(assign->value.get());
+	} else if (assign->assign_type == 1) {
+	    if (typeNameOf(variables[assign->name]) == "Number") {
+		variables[assign->name].data = std::get<long long>(variables[assign->name].data) + 1;
+	    } else {
+		throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+					  ": cannot use '++' on a non-Number variable");
+	    }
+	}
         return;
     }
     
