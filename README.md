@@ -965,8 +965,32 @@ Output:
 
 ---
 
-> [!NOTE]
-> More information comming soon
+## Comments
+
+Now let's see how to make **comments** in Swiq
+Comments are usually ignored
+
+### Block Comments
+
+You can make a block comment with `/*` and `*/`
+Example:
+```swiq
+/* This is a 
+   block comment */
+```
+Block comments are multi-line
+
+### Single-line Comments
+
+You can make a Single-line comment with `//` or `#`
+Example 1:
+```swiq
+// a single line comment
+```
+Example 2:
+```swiq
+# a single line comment
+```
 
 ---
 

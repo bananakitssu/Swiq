@@ -19,12 +19,17 @@ Version 1 is almost finished. Just need to add:
 * Function resetting
 * Add `wait()` built-in
 * Add `stop n;` for stopping code (e.g., `stop 0;` = stop & status code = 0)
+* Add nested functions
 
 And I need to improve:
 
 * Importing
 * Variable creation
 * File finding
+
+Total number of completed stuff: ***9***
+Total number of uncompleted stuff: ***9***
+Total: ***18***
 
 ***I am currently taking a break from coding this project right now.***
 
