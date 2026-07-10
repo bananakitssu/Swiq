@@ -10,16 +10,17 @@ Version 1 is almost finished. Just need to add:
 * File deleting
 * File moving
 * File copying
-* var math v2 `var++`, `var--`, `var**` (`var * var`), `var/=`, `var+=`, `var-=`, `var*=`
+* var math v2 `var++`, `var--`, `var+=`, `var-=`
+* Add `&&` and `||` support to ***conditions***
+* add var math v2 support to `for` loops
+* Library imports from ***Swiq***
 
 And I need to improve:
 
 * Importing
 * Variable creation
 
-I am currently working on:
-
-* var math v2
+***I am currently taking a break from coding this project right now.***
 
 Finished:
 
@@ -31,3 +32,4 @@ Finished:
 * File deleting
 * File copying
 * Command execution
+* var math v2

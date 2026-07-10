@@ -150,6 +150,21 @@ void Interpreter::execute(const Stmt* stmt, int type) {
 		throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
 					  ": cannot use '+=' on a variable that isn't a String or Number");
 	    }
+	} else if (assign->assign_type == 3) {
+	    if (typeNameOf(variables[assign->name]) == "Number") {
+		variables[assign->name].data = std::get<long long>(variables[assign->name].data) - 1;
+	    } else {
+		throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+					  ": cannot use '--' on a non-Number variable");
+	    }
+	} else if (assign->assign_type == 4) {
+	    if (typeNameOf(variables[assign->name]) == "Number") {
+		if (typeNameOf(evaluate(assign->value.get())) != "Number") {
+		    throw std::runtime_error("Interpreter error at line " + std::to_string(assign->line) +
+					      ": cannot use '-=', cannot substract Number -= " + typeNameOf(evaluate(assign->value.get())) + ", expected Number -= Number");
+		}
+		variables[assign->name].data = std::get<long long>(variables[assign->name].data) - std::get<long long>(evaluate(assign->value.get()).data);
+	    }
 	}
         return;
     }
@@ -165,7 +180,7 @@ void Interpreter::execute(const Stmt* stmt, int type) {
 	} else {
 	    throw std::runtime_error(
 		"Interpreter error at line " + std::to_string(_destroy->line) +
-		": cannot have 'destroy', it's for functions, switchers and try statements only.");
+		": cannot have 'destroy', it's for functions, while loops, if blocks, for loops, switchers and try/catch statements only.");
 	}
     }
     
@@ -251,9 +266,9 @@ void Interpreter::execute(const Stmt* stmt, int type) {
 
     if (auto ifStmt = dynamic_cast<const IfStmt*>(stmt)) {
         if (isTruthy(evaluate(ifStmt->condition.get()))) {
-            executeBlock(ifStmt->thenBranch);
+            executeBlock(ifStmt->thenBranch, 1);
         } else {
-            executeBlock(ifStmt->elseBranch);
+            executeBlock(ifStmt->elseBranch, 1);
         }
         return;
     }

@@ -248,6 +248,20 @@ std::unique_ptr<Stmt> Parser::parseAssign() {
 	} else {
 	    throw std::runtime_error("Parser error at line " + std::to_string(current().line) + ": expected '=' or '+' after '+' (var++ or var+=)");
 	}
+    } else if (check(TokenType::MINUS)) {
+	advance();
+	if (check(TokenType::MINUS)) {
+	    assign_type = 3;
+	    advance();
+	    expect(TokenType::SEMICOLON, "expected ';'");
+	} else if (check(TokenType::EQUALS)) {
+	    assign_type = 4;
+	    advance();
+	    value = parseExpr();
+	    expect(TokenType::SEMICOLON, "expected ';'");
+	} else {
+	    throw std::runtime_error("Parser error at line " + std::to_string(current().line) + ": expected '=' or '-' after '+' (var-- or var-=)");
+	}
     } else {
 	expect(TokenType::EQUALS, "expected '='");
 	value = parseExpr();

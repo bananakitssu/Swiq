@@ -277,6 +277,16 @@ Output:
 hello, world!
 ```
 
+You can substract `1` from a Number variable by:
+```swiq
+set x--;
+```
+
+And you can also substract by:
+```swiq
+set x -= 5;
+```
+
 ---
 
 ## Math
