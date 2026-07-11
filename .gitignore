@@ -1,3 +1,7 @@
 build/
 *.o
 *.out
+old/
+*.old
+.agents/
+.replit

@@ -1,5 +1,5 @@
 # Swiq (Website)
 
-[![pages-build-deployment](https://github.com/bananakitssu/Swiq/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/bananakitssu/Swiq/actions/workflows/pages/pages-build-deployment)
+[![Deploy Multiple TSX to Pages](https://github.com/bananakitssu/Swiq/actions/workflows/deploy.yml/badge.svg)](https://github.com/bananakitssu/Swiq/actions/workflows/deploy.yml)
 
 This is Swiq's official website.

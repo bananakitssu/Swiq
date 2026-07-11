@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Swiq — a small language, built from scratch</title>
+<title>Swiq — a custom language, built from scratch</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -25,6 +25,7 @@
     --num: #67e8f9;
     --cmt: #6b7280;
     --fn: #fcd34d;
+    --type: #f43f5e;
   }
 
   * { box-sizing: border-box; }
@@ -205,6 +206,7 @@
   .str { color: var(--str); }
   .num { color: var(--num); }
   .fn  { color: var(--fn); }
+  .type-tag { color: var(--type); }
 
   .cursor {
     display: inline-block;
@@ -421,6 +423,8 @@
   <span class="brand">Swiq</span>
   <div class="nav-links">
     <a href="#features">Features</a>
+    <a href="#state-machine">State Machine</a>
+    <a href="#types">Contracts</a>
     <a href="#closures">Closures</a>
     <a href="#get-started">Get started</a>
   </div>
@@ -431,8 +435,8 @@
   <div class="wrap hero-grid">
     <div>
       <span class="eyebrow">A language, built from scratch</span>
-      <h1 class="headline">A small language<br>with a <span class="grad">real compiler pipeline.</span></h1>
-      <p class="tagline">Lexer, recursive-descent parser, tree-walking interpreter — all written in C++, one feature at a time. Functions, closures, arrays, loops, and a syntax you won't find anywhere else.</p>
+      <h1 class="headline">A custom engine<br>with a <span class="grad">real compiler pipeline.</span></h1>
+      <p class="tagline">Lexer, recursive-descent parser, tree-walking interpreter — all engineered from scratch in C++. Enforces explicit closure scopes, system-state controls, and hard numeric data isolation.</p>
       <div class="hero-ctas">
         <a class="btn btn-primary" href="https://github.com/bananakitssu/Swiq" target="_blank" rel="noopener">View on GitHub</a>
         <a class="btn btn-secondary" href="#features">See what it can do</a>
@@ -446,7 +450,7 @@
         <span class="dot green"></span>
       </div>
       <div class="terminal-body">
-        <div class="prompt mono">./swiq hello.swiq</div>
+        <div class="prompt mono">./swiq execution.swiq</div>
         <div id="typed-code" class="mono"></div>
       </div>
     </div>
@@ -456,82 +460,76 @@
 <section class="features" id="features">
   <div class="wrap">
     <div class="section-head">
-      <h2>Everything a tiny language needs</h2>
-      <p>Built up piece by piece — every feature here exists because something didn't work without it.</p>
+      <h2>Deterministic Engine Features</h2>
+      <p>Built up piece by piece — every system component maps directly to strict, isolated language rules.</p>
     </div>
     <div class="feature-grid">
       <div class="feature-card">
-        <h3>Functions &amp; recursion</h3>
-        <p>Declare with <code>func</code>, return with <code>return</code>. Recursive calls work exactly like you'd expect.</p>
+        <h3>State-Machine Lifecycles</h3>
+        <p>Control variables natively using keyword statements like <code>archive</code>, <code>restore</code>, <code>reset</code>, and <code>delete</code>.</p>
       </div>
       <div class="feature-card">
-        <h3>Explicit closures</h3>
-        <p>Functions see nothing by default. Add a name to <code>[brackets]</code> to let one in, on purpose.</p>
+        <h3>Hard Type Isolation</h3>
+        <p>Integers (<code>long long</code>) and Floats (<code>double</code>) are kept distinct. <code>5 == 5.0</code> evaluates to <code>false</code>.</p>
       </div>
       <div class="feature-card">
-        <h3>Arrays</h3>
-        <p><code>[1, 2, 3]</code> literals, indexing, in-place mutation, plus <code>len()</code> and <code>push()</code>.</p>
+        <h3>Explicit Closures</h3>
+        <p>Functions see nothing outside their scope by default. Pass names to <code>[captures]</code> to grant explicit mutating access.</p>
       </div>
       <div class="feature-card">
-        <h3>Real precedence</h3>
-        <p><code>2 + 3 * 4</code> evaluates the way math actually works, not just left to right.</p>
+        <h3>Type &amp; Interface Blueprints</h3>
+        <p>Validate object literals structurally with strict signature matching or flexible fallbacks to <code>null</code>.</p>
       </div>
       <div class="feature-card">
-        <h3>Three comment styles</h3>
-        <p><code>#</code>, <code>//</code>, and <code>/* */</code> — pick whichever your fingers prefer.</p>
+        <h3>Reference-Counted Arrays</h3>
+        <p>Supports literal growable lists or bounded, fixed-size layouts that reject memory mutation.</p>
       </div>
       <div class="feature-card">
-        <h3>Line-numbered errors</h3>
-        <p>Every parse and runtime error points at the exact line that caused it.</p>
+        <h3>File System Modules</h3>
+        <p>Dynamic compile-time code composition using a structural <code>@import "file.swiq";</code> pipeline directive.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="spotlight" id="closures">
+<section class="spotlight" id="state-machine">
   <div class="wrap spotlight-grid">
     <div class="spotlight-text">
-      <span class="spotlight-tag">The Swiq way</span>
-      <h2>Closures, but you have to ask first</h2>
-      <p>Most languages let a function quietly see every variable around it. Swiq flips that: functions are isolated by default, and you list exactly which outer variable a function is allowed to touch.</p>
-      <p>Listed variables get full read-and-write access — change them inside the function, and the change is still there once it returns. Anything you didn't list stays invisible.</p>
+      <span class="spotlight-tag">State Manipulation</span>
+      <h2>Native Lifecycle Management</h2>
+      <p>Swiq embeds memory and lifecycle operations directly into statements. Instead of waiting for loose garbage collections, you dictate state flags natively.</p>
+      <p>Using <code>archive</code> safely shifts an identifier from the active runtime context into background memory preservation, locking it out of mutations. Bring it back instantly using <code>restore</code>, or trigger <code>reset</code> to roll values back to their initial declaration block.</p>
     </div>
     <div class="spotlight-code">
-      <pre class="code-block"><span class="kw">set</span> <span class="kw">var</span> counter = <span class="num">0</span>;
+      <pre class="code-block"><span class="kw">set</span> <span class="kw">var</span> token = <span class="str">"0x7F"</span>;
 
-<span class="kw">func</span> <span class="fn">increment</span>()[counter] {
-    <span class="kw">set</span> counter = counter + <span class="num">1</span>;
-    <span class="kw">return</span> counter;
-}
+<span class="kw">archive</span> token;
+<span class="cmt"># log(token); ❌ Exception: variable is archived.</span>
 
-log(<span class="fn">increment</span>());
-log(<span class="fn">increment</span>());
-log(counter);
-<span class="out">1
-2
-2</span></pre>
+<span class="kw">restore</span> token;
+log(token);
+<span class="out">0x7F</span></pre>
     </div>
   </div>
 </section>
 
-<section class="spotlight">
+<section class="spotlight" id="types">
   <div class="wrap spotlight-grid reverse">
     <div class="spotlight-code">
-      <pre class="code-block"><span class="kw">set</span> <span class="kw">var</span> arr = [<span class="num">10</span>, <span class="num">20</span>, <span class="num">30</span>];
-<span class="fn">push</span>(arr, <span class="num">40</span>);
+      <pre class="code-block"><span class="kw">set</span> <span class="kw">interface</span> NetworkConfig = {
+    port: <span class="type-tag">Number</span> = <span class="num">8080</span>,
+    bitrate: <span class="type-tag">Number</span>&lt;integerOnly&gt;
+};
 
-<span class="kw">set</span> <span class="kw">var</span> sum = <span class="num">0</span>;
-<span class="kw">for</span> (<span class="kw">set</span> <span class="kw">var</span> i = <span class="num">0</span>; i &lt; <span class="fn">len</span>(arr); <span class="kw">set</span> i = i + <span class="num">1</span>) {
-    <span class="kw">set</span> sum = sum + arr[i];
-}
-
-log(sum);
-<span class="out">100</span></pre>
+<span class="kw">set</span> <span class="kw">var</span> primarySocket = { bitrate: <span class="num">9600</span> }&lt;NetworkConfig&gt;;
+log(primarySocket.port);
+<span class="out">8080</span></pre>
     </div>
     <div class="spotlight-text">
-      <span class="spotlight-tag">Loops &amp; arrays</span>
-      <h2>C-style for loops, real array mutation</h2>
-      <p>Arrays have reference semantics — push into one inside a loop or a function, and every variable pointing at it sees the update. Combined with a familiar three-clause <code>for</code>, you get the building blocks for actual programs, not just toy scripts.</p>
+      <span class="spotlight-tag">Structural Verification</span>
+      <h2>Type vs. Interface Blueprints</h2>
+      <p>Construct complex, verified object structures using explicit colon templates. Fields enforce matching base types like <code>Number</code>, <code>String</code>, or <code>Boolean</code>, along with targeted validation modifiers like <code>&lt;integerOnly&gt;</code>.</p>
+      <p>Choose your contract enforcement: <code>type</code> definitions act as open structures where missing parameters collapse down cleanly to <code>null</code>, while strict <code>interface</code> definitions drop full runtime exceptions if mandatory initializations are omitted.</p>
     </div>
   </div>
 </section>
@@ -558,14 +556,15 @@ make
 
 <script>
   const codeLines = [
-    { text: 'set var x = 5;', html: '<span class="kw">set</span> <span class="kw">var</span> x = <span class="num">5</span>;' },
-    { text: 'log(x + 2);', html: '<span class="fn">log</span>(x + <span class="num">2</span>);' }
+    { text: 'set interface Host = { port: Number = 8080 };', html: '<span class="kw">set</span> <span class="kw">interface</span> Host = { port: <span class="type-tag">Number</span> = <span class="num">8080</span> };' },
+    { text: 'set var node = {}<Host>;', html: '<span class="kw">set</span> <span class="kw">var</span> node = {}&lt;Host&gt;;' },
+    { text: 'log(node.port);', html: '<span class="fn">log</span>(node.port);' }
   ];
   const target = document.getElementById('typed-code');
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function renderFinal() {
-    target.innerHTML = codeLines.map(l => l.html).join('<br>') + '<br><span class="out-line">7</span>';
+    target.innerHTML = codeLines.map(l => l.html).join('<br>') + '<br><span class="out-line">8080</span>';
   }
 
   if (reduceMotion) {
@@ -575,12 +574,12 @@ make
     let builtHtml = '';
 
     function escapeHtml(str) {
-      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 
     function typeStep() {
       if (lineIndex >= codeLines.length) {
-        target.innerHTML = builtHtml + '<br><span class="out-line">7</span>';
+        target.innerHTML = builtHtml + '<br><span class="out-line">8080</span>';
         return;
       }
       const line = codeLines[lineIndex];
@@ -588,12 +587,12 @@ make
         const partial = line.text.slice(0, charIndex);
         target.innerHTML = builtHtml + escapeHtml(partial) + '<span class="cursor"></span>';
         charIndex++;
-        setTimeout(typeStep, 38);
+        setTimeout(typeStep, 30);
       } else {
         builtHtml += line.html + '<br>';
         lineIndex++;
         charIndex = 0;
-        setTimeout(typeStep, 220);
+        setTimeout(typeStep, 200);
       }
     }
 
@@ -603,4 +602,3 @@ make
 
 </body>
 </html>
-
