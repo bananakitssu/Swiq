@@ -53,12 +53,16 @@ int main(int argc, char* argv[]) {
             Lexer lexer(code);
             std::vector<Token> tokens = lexer.tokenize();
             
-            Parser parser(tokens);
+            Parser parser(tokens, fs::path(filepath).has_parent_path() ? fs::path(filepath).parent_path().string() : fs::current_path().string());
             std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
             
-            Interpreter interpreter;
+            Interpreter interpreter(fs::path(filepath).has_parent_path() ? fs::path(filepath).parent_path().string() : fs::current_path().string());
             interpreter.run(statements);
-        } catch (const std::runtime_error& e) {
+        } catch (const Interpreter::StopSignal& s) {
+            return s.status;
+        } catch (const Interpreter::StopSignal& s) {
+        return s.status;
+    } catch (const std::runtime_error& e) {
             std::cerr << e.what() << std::endl;
             return 1;
         }
@@ -80,7 +84,7 @@ int main(int argc, char* argv[]) {
         Lexer lexer(source);
         std::vector<Token> tokens = lexer.tokenize();
 
-        Parser parser(tokens);
+        Parser parser(tokens, fs::path(filepath).has_parent_path() ? fs::path(filepath).parent_path().string() : fs::current_path().string());
         std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
 
         Interpreter interpreter;

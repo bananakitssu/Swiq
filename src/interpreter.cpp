@@ -5,6 +5,8 @@
 #include <sstream>
 #include <filesystem>
 #include <cstdio>
+#include <thread>
+#include <chrono>
 
 #if defined(_WIN32) || defined(_WIN64)
     #define POPEN _popen
@@ -19,6 +21,15 @@
 #endif
 
 namespace fs = std::filesystem;
+
+Interpreter::Interpreter(std::string baseDir)
+    : baseDir(std::move(baseDir)) {}
+
+fs::path Interpreter::resolvePath(const fs::path& path) const {
+    if (path.is_absolute()) return path;
+    if (fs::exists(path)) return path;
+    return fs::path(baseDir) / path;
+}
 
 void Interpreter::run(const std::vector<std::unique_ptr<Stmt>>& statements) {
     registerFunctions(statements);
@@ -44,7 +55,8 @@ void Interpreter::registerFunctions(const std::vector<std::unique_ptr<Stmt>>& st
                 throw std::runtime_error("Interpreter error at line " + std::to_string(func->line) + ": function '" + func->name + "' already defined.");
             }
             functions[func->name] = func;
-	    protected_functions[func->name] = func->isProtected;
+            default_functions[func->name] = func;
+            protected_functions[func->name] = func->isProtected;
         }
     }
 }
@@ -89,8 +101,17 @@ void Interpreter::executeSwitcherStmt(const SwitcherStmt* stmt) {
 
 void Interpreter::execute(const Stmt* stmt, int type) {
     if (auto varDecl = dynamic_cast<const VarDeclStmt*>(stmt)) {
-        variables[varDecl->name] = evaluate(varDecl->value.get());
-        default_variables[varDecl->name] = evaluate(varDecl->value.get());
+        if (variables.find(varDecl->name) != variables.end()) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(varDecl->line) +
+                                     ": variable '" + varDecl->name + "' is already declared");
+        }
+        if (archived_variables.find(varDecl->name) != archived_variables.end()) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(varDecl->line) +
+                                     ": variable '" + varDecl->name + "' is archived; use 'restore' or 'delete' first");
+        }
+        Value initial = evaluate(varDecl->value.get());
+        variables[varDecl->name] = initial;
+        default_variables[varDecl->name] = initial;
         protected_variables[varDecl->name] = varDecl->isProtected;
         if (varDecl->isLocal) {
             local_variables.insert(varDecl->name);
@@ -111,12 +132,10 @@ void Interpreter::execute(const Stmt* stmt, int type) {
                                      ": cannot assign to protected variable '" + assign->name + "'");
         }
         if (variables.find(assign->name) == variables.end()) {
-            if (archived_variables.find(assign->name) != archived_variables.end()) {
-                throw std::runtime_error(
-                    "Interpreter error at line " + std::to_string(assign->line) +
-                    ": cannot assign to undeclared variable '" + assign->name +
-                    "'. Use 'set var' to declare it first.");
-            }
+            throw std::runtime_error(
+                "Interpreter error at line " + std::to_string(assign->line) +
+                ": cannot assign to undeclared variable '" + assign->name +
+                "'. Use 'set var' to declare it first.");
         }
         if (archived_variables.find(assign->name) != archived_variables.end()) {
             throw std::runtime_error(
@@ -174,6 +193,16 @@ void Interpreter::execute(const Stmt* stmt, int type) {
         return;
     }
     
+    if (auto stop = dynamic_cast<const StopStmt*>(stmt)) {
+        Value statusVal = evaluate(stop->status.get());
+        auto status = std::get_if<long long>(&statusVal.data);
+        if (!status) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(stop->line) +
+                                     ": stop requires an integer status code");
+        }
+        throw StopSignal{static_cast<int>(*status)};
+    }
+
     if (auto _destroy = dynamic_cast<const DestroyStmt*>(stmt)) {
 	if (type == 1) {
             throw DestroySignal{};
@@ -185,50 +214,76 @@ void Interpreter::execute(const Stmt* stmt, int type) {
     }
     
     if (auto reset = dynamic_cast<const ResetStmt*>(stmt)) {
-        if (variables.find(reset->name) == variables.end()) {
-            throw std::runtime_error(
-                "Cannot reset an unknown variable. Error at line " + std::to_string(reset->line)
-            );
+        if (variables.find(reset->name) != variables.end()) {
+            variables[reset->name] = default_variables[reset->name];
+            return;
         }
-        variables[reset->name] = default_variables[reset->name];
-        return;
+        auto fit = default_functions.find(reset->name);
+        if (fit != default_functions.end()) {
+            functions[reset->name] = fit->second;
+            archived_functions.erase(reset->name);
+            return;
+        }
+        throw std::runtime_error("Cannot reset an unknown variable or function. Error at line " +
+                                 std::to_string(reset->line));
     }
-    
+
     if (auto _delete = dynamic_cast<const DeleteStmt*>(stmt)) {
-        if (variables.find(_delete->name) == variables.end()) {
-            throw std::runtime_error(
-                "Cannot delete an unknown variable. Error at line " + std::to_string(_delete->line)
-            );
+        if (variables.find(_delete->name) != variables.end()) {
+            if (protected_variables[_delete->name]) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(_delete->line) +
+                                         ": cannot delete protected variable '" + _delete->name + "'");
+            }
+            variables.erase(_delete->name);
+            protected_variables.erase(_delete->name);
+            return;
         }
-        if (protected_variables[_delete->name]) {
-            throw std::runtime_error("Interpreter error at line " + std::to_string(_delete->line) +
-                                     ": cannot delete protected variable '" + _delete->name + "'");
+        if (functions.find(_delete->name) != functions.end()) {
+            functions.erase(_delete->name);
+            protected_functions.erase(_delete->name);
+            archived_functions.erase(_delete->name);
+            default_functions.erase(_delete->name);
+            return;
         }
-        variables.erase(_delete->name);
-        protected_variables.erase(_delete->name);
-        return;
+        throw std::runtime_error("Cannot delete an unknown variable or function. Error at line " +
+                                 std::to_string(_delete->line));
     }
-    
+
     if (auto archive = dynamic_cast<const ArchiveStmt*>(stmt)) {
-        if (variables.find(archive->name) == variables.end()) {
-            throw std::runtime_error(
-                "Cannot archive an unknown variable. Error at line " + std::to_string(archive->line)
-            );
+        if (variables.find(archive->name) != variables.end()) {
+            archived_variables[archive->name] = variables[archive->name];
+            variables.erase(archive->name);
+            return;
         }
-        archived_variables[archive->name] = variables[archive->name];
-        variables.erase(archive->name);
-        return;
+        auto fit = functions.find(archive->name);
+        if (fit != functions.end()) {
+            archived_functions[archive->name] = fit->second;
+            functions.erase(fit);
+            return;
+        }
+        throw std::runtime_error("Cannot archive an unknown variable or function. Error at line " +
+                                 std::to_string(archive->line));
     }
-    
+
     if (auto restore = dynamic_cast<const RestoreStmt*>(stmt)) {
-        if (archived_variables.find(restore->name) == archived_variables.end()) {
-            throw std::runtime_error(
-                "Cannot restore an variable that has not been archived. Error at line " + std::to_string(restore->line)
-            );
+        auto vit = archived_variables.find(restore->name);
+        if (vit != archived_variables.end()) {
+            variables[restore->name] = vit->second;
+            archived_variables.erase(vit);
+            return;
         }
-        variables[restore->name] = archived_variables[restore->name];
-        archived_variables.erase(restore->name);
-        return;
+        auto fit = archived_functions.find(restore->name);
+        if (fit != archived_functions.end()) {
+            if (functions.find(restore->name) != functions.end()) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(restore->line) +
+                                         ": cannot restore function '" + restore->name + "' because that name is already active");
+            }
+            functions[restore->name] = fit->second;
+            archived_functions.erase(fit);
+            return;
+        }
+        throw std::runtime_error("Cannot restore a variable or function that has not been archived. Error at line " +
+                                 std::to_string(restore->line));
     }
 
     if (auto idxAssign = dynamic_cast<const IndexAssignStmt*>(stmt)) {
@@ -290,15 +345,28 @@ void Interpreter::execute(const Stmt* stmt, int type) {
     }
 
     if (auto funcDecl = dynamic_cast<const FuncDeclStmt*>(stmt)) {
-	if (protected_functions[funcDecl->name] && funcDecl->overriding) {
-	    throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) + ": cannot override a protected function.");
-	}
-        if (functions.find(funcDecl->name) == functions.end() && funcDecl->overriding) {
-            throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) + ": overriding function '" + funcDecl->name + "' which is not defined.");
+        if (type == 0) return;
+
+        if (protected_functions[funcDecl->name] && funcDecl->overriding) {
+            throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) +
+                                     ": cannot override a protected function.");
         }
         if (funcDecl->overriding) {
+            if (functions.find(funcDecl->name) == functions.end()) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) +
+                                         ": overriding function '" + funcDecl->name + "' which is not defined.");
+            }
             functions[funcDecl->name] = funcDecl;
+        } else {
+            if (functions.find(funcDecl->name) != functions.end()) {
+                throw std::runtime_error("Interpreter error at line " + std::to_string(funcDecl->line) +
+                                         ": function '" + funcDecl->name + "' already defined.");
+            }
+            functions[funcDecl->name] = funcDecl;
+            default_functions[funcDecl->name] = funcDecl;
+            protected_functions[funcDecl->name] = funcDecl->isProtected;
         }
+        return;
     }
 
     if (dynamic_cast<const TypeDeclStmt*>(stmt)) {
@@ -388,6 +456,20 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
         return Value(obj);
     }
 
+    if (name == "wait") {
+        if (args.size() != 1) throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                                        ": wait() expects exactly 1 argument (seconds)");
+        double seconds;
+        if (auto i = std::get_if<long long>(&args[0].data)) seconds = static_cast<double>(*i);
+        else if (auto d = std::get_if<double>(&args[0].data)) seconds = *d;
+        else throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                      ": wait() requires a number of seconds");
+        if (seconds < 0) throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
+                                                   ": wait() duration cannot be negative");
+        std::this_thread::sleep_for(std::chrono::duration<double>(seconds));
+        return Value();
+    }
+
     if (name == "typeof") {
         if (args.size() != 1) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
@@ -406,7 +488,7 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                                       ": readFile() requires a string path");
         }
-        std::ifstream file(*path);
+        std::ifstream file(resolvePath(*path));
         if (!file) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
                                       ": could not open file '" + *path + "'");
@@ -436,7 +518,7 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": writeFile() requires file content as a string");
 	}
-	fs::path converted = fs::path(*path) / *name;
+	fs::path converted = resolvePath(fs::path(*path)) / *name;
 	std::ofstream newFile(converted.string());
 	if (!newFile.is_open()) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
@@ -459,7 +541,7 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 	}
 	auto result = false;
 	try {
-	    if (fs::remove(fs::path(*path))) {
+	    if (fs::remove(resolvePath(fs::path(*path)))) {
 		result = true;
 	    } else {
 		result = false;
@@ -492,7 +574,7 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 				      ": moveFile() requires a string name");
 	}
 	std::error_code ec;
-	fs::rename(fs::path(*path1) / *name, fs::path(*path2) / *name, ec);
+	fs::rename(resolvePath(fs::path(*path1)) / *name, resolvePath(fs::path(*path2)) / *name, ec);
 	if (ec) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": failed to move file: " + ec.message());
@@ -521,7 +603,7 @@ Value Interpreter::callBuiltin(const std::string& name, std::vector<Value>& args
 				      ": copyFile() requires a string file name");
 	}
 	try {
-	    fs::copy_file(fs::path(*path1) / *name, fs::path(*path2) / *name, fs::copy_options::overwrite_existing);
+	    fs::copy_file(resolvePath(fs::path(*path1)) / *name, resolvePath(fs::path(*path2)) / *name, fs::copy_options::overwrite_existing);
 	} catch (const fs::filesystem_error& e) {
 	    throw std::runtime_error("Interpreter error at line " + std::to_string(line) +
 				      ": failed to copy file: " + e.what());
@@ -571,23 +653,15 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
     // Functions run in a fresh, isolated scope. Only parameters and any
     // explicitly listed [captures] are visible — everything else from the
     // outer scope is invisible by default.
-    auto savedVars = std::move(variables);
-    /*auto savedFunctionss = std::move(functions);
-    auto savedDefaults = std::move(default_variables);
-    auto savedProtectedVars = std::move(protected_variables);
-    auto savedLocalVars = std::move(local_variables);
-    auto savedArchivedVars = std::move(archived_variables):*/
-    variables = std::unordered_map<std::string, Value>();
-    /*default_variables = std::unordered_map<std::string, Value>();
-    archived_variables = std::unordered_map<std::string, Value>();
-    protected_variables = std::unordered_map<std::string, Value>();*/
+    auto savedVars = variables;
+    auto savedFunctions = functions;
+    auto savedProtectedFunctions = protected_functions;
+    auto savedDefaultFunctions = default_functions;
+    auto savedArchivedFunctions = archived_functions;
+    variables.clear();
 
     if (func->capturingAll) {
-	variables = std::move(savedVars);
-	/*default_variables = std::move(savedDefualts);
-	protected_variables = std::move(savedProtectedVars);
-	archived_variables = std::move(savedArchivedVars);
-	local_variables = std::move(savedLocalVars);*/
+        variables = savedVars;
     }
 
     // Bring in captured variables by their current value.
@@ -596,7 +670,7 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
 	/*auto it2 = savedDefaults.find(name);
 	auto it3 = savedProtectedVars.find(name);*/
         if (it == savedVars.end()) {
-            variables = std::move(savedVars); // restore before throwing
+            variables = savedVars; // restore before throwing
             throw std::runtime_error("Interpreter error at line " + std::to_string(callLine) +
                                       ": function '" + func->name + "' captures undefined variable '" +
                                       name + "'");
@@ -618,7 +692,11 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
     } catch (DestroySignal& d) {
 	result = "";
     } catch (...) {
-        variables = std::move(savedVars);
+        variables = savedVars;
+        functions = savedFunctions;
+        protected_functions = savedProtectedFunctions;
+        default_functions = savedDefaultFunctions;
+        archived_functions = savedArchivedFunctions;
         throw;
     }
 
@@ -628,7 +706,11 @@ Value Interpreter::callFunction(const FuncDeclStmt* func, std::vector<Value> arg
         savedVars[name] = variables[name];
     }
 
-    variables = std::move(savedVars);
+    variables = savedVars;
+    functions = savedFunctions;
+    protected_functions = savedProtectedFunctions;
+    default_functions = savedDefaultFunctions;
+    archived_functions = savedArchivedFunctions;
     return result;
 }
 
@@ -756,6 +838,28 @@ Value Interpreter::evaluate(const Expr* expr) {
 	    }
 	}
 
+        } else if (mcall->method == "Split") {
+            if (mcall->args.size() != 1) throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                                                   ": Split() expects exactly 1 argument (delimiter)");
+            auto strObj = std::get_if<std::string>(&obj.data);
+            if (!strObj) throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                                  ": Split() can only be called on a String");
+            Value delimiterVal = evaluate(mcall->args[0].get());
+            auto delimiter = std::get_if<std::string>(&delimiterVal.data);
+            if (!delimiter) throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                                     ": Split() requires a String delimiter");
+            if (delimiter->empty()) throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
+                                                              ": Split() delimiter cannot be empty");
+            auto result = std::make_shared<ArrayObject>();
+            size_t start = 0, at;
+            while ((at = strObj->find(*delimiter, start)) != std::string::npos) {
+                result->elements.emplace_back(strObj->substr(start, at - start));
+                start = at + delimiter->size();
+            }
+            result->elements.emplace_back(strObj->substr(start));
+            return Value(result);
+        }
+
         throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
                                   ": unknown method '" + mcall->method + "'");
     }
@@ -769,7 +873,7 @@ Value Interpreter::evaluate(const Expr* expr) {
         if (call->callee == "len" || call->callee == "push" || call->callee == "AllocatedArray" ||
             call->callee == "readFile" || call->callee == "writeFile" || call->callee == "delFile" ||
 	    call->callee == "moveFile" || call->callee == "copyFile" ||call->callee == "typeof" ||
-	    call->callee == "exec") {
+	    call->callee == "exec" || call->callee == "wait") {
             return callBuiltin(call->callee, args, call->line);
         }
 
@@ -848,8 +952,16 @@ Value Interpreter::evaluate(const Expr* expr) {
 
     if (auto bin = dynamic_cast<const BinaryExpr*>(expr)) {
         Value left = evaluate(bin->left.get());
-        Value right = evaluate(bin->right.get());
         const std::string& op = bin->op;
+        if (op == "&&") {
+            if (!isTruthy(left)) return Value(false);
+            return Value(isTruthy(evaluate(bin->right.get())));
+        }
+        if (op == "||") {
+            if (isTruthy(left)) return Value(true);
+            return Value(isTruthy(evaluate(bin->right.get())));
+        }
+        Value right = evaluate(bin->right.get());
 
         // Numeric arithmetic — promotes to double if either side is a float
         if (op == "+" && !std::holds_alternative<std::string>(left.data) &&

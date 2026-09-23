@@ -277,6 +277,14 @@ struct ReturnStmt : Stmt {
     ReturnStmt(std::unique_ptr<Expr> value, int line) : value(std::move(value)), line(line) {}
 };
 
+// stop <status>; — immediately terminates the whole Swiq process with a status code.
+struct StopStmt : Stmt {
+    std::unique_ptr<Expr> status;
+    int line;
+
+    StopStmt(std::unique_ptr<Expr> status, int line) : status(std::move(status)), line(line) {}
+};
+
 // reset x
 struct ResetStmt : Stmt {
     std::string name;

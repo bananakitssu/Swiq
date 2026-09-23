@@ -6,12 +6,20 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <filesystem>
 
 class Interpreter {
 public:
+    struct StopSignal { int status; };
+
+    explicit Interpreter(std::string baseDir = ".");
+
     void run(const std::vector<std::unique_ptr<Stmt>>& statements);
 
 private:
+    std::string baseDir;
+    std::filesystem::path resolvePath(const std::filesystem::path& path) const;
+
     std::unordered_map<std::string, Value> variables;
     std::unordered_set<std::string> local_variables;
     std::unordered_map<std::string, Value> archived_variables;
@@ -19,6 +27,8 @@ private:
     std::unordered_map<std::string, const FuncDeclStmt*> functions;
     std::unordered_map<std::string, bool> protected_functions;
     std::unordered_map<std::string, bool> protected_variables;
+    std::unordered_map<std::string, const FuncDeclStmt*> archived_functions;
+    std::unordered_map<std::string, const FuncDeclStmt*> default_functions;
     
     void executeTryStmt(const TryStmt* stmt);
 
