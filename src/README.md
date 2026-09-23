@@ -2,7 +2,7 @@
 
 Version 1 is almost finished. Just need to add:
 
-* Function overriding
+<!--* Function overriding
 * Function protection
 * Switcher (like `switch (myVar) {}` but as `switcher (myVar):`)
 * Command execution
@@ -10,7 +10,7 @@ Version 1 is almost finished. Just need to add:
 * File deleting
 * File moving
 * File copying
-* var math v2 `var++`, `var--`, `var+=`, `var-=`
+* var math v2 `var++`, `var--`, `var+=`, `var-=`-->
 * Add `&&` and `||` support to ***conditions***
 * add var math v2 support to `for` loops
 * Library imports from ***Swiq***
