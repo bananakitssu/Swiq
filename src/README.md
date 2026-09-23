@@ -31,7 +31,7 @@ Total: ***18***
 ### New v1 behavior
 
 * Relative imports are resolved from the importing file's directory, and circular imports are rejected.
-* Bundled libraries can be imported with `@import "Swiq/name";`, `@import "Swiq:name";`, or a bare library name when a matching file exists in `libraries/`.
+* Bundled libraries can be imported with `@import "Swiq/name";`, `@import "Swiq:name";`, or a bare library name when a matching file exists in `public_apis/`.
 * `.Split("delimiter")` returns a normal growable array.
 * `wait(seconds)` pauses execution for the requested number of seconds.
 * `stop n;` exits the interpreter with status code `n`.
