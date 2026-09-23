@@ -79,14 +79,14 @@ void Parser::parseImportAndAppend(std::vector<std::unique_ptr<Stmt>>& target) {
         candidates.push_back(fs::current_path() / requested);
     }
 
-    // Bundled library imports: @import "Swiq/name";, "Swiq:name", or a bare
-    // library name. The .swiq extension is optional.
+    // Bundled public API imports: @import "Swiq/name";, "Swiq:name", or a bare
+    // API name. The .swiq extension is optional.
     const std::string prefixes[] = {"Swiq/", "Swiq:", "@Swiq/"};
     for (const auto& prefix : prefixes) {
         if (std::string(pathTok.value).rfind(prefix, 0) == 0) {
 #ifdef SWIQ_SOURCE_DIR
             fs::path libName(pathTok.value.substr(prefix.size()));
-            fs::path libRoot = fs::path(SWIQ_SOURCE_DIR) / "libraries";
+            fs::path libRoot = fs::path(SWIQ_SOURCE_DIR) / "public_apis";
             candidates.push_back(libRoot / libName);
             candidates.push_back(libRoot / (libName.string() + ".swiq"));
 #endif
@@ -95,7 +95,7 @@ void Parser::parseImportAndAppend(std::vector<std::unique_ptr<Stmt>>& target) {
     }
     if (!requested.has_parent_path() && requested.extension() != ".swiq") {
 #ifdef SWIQ_SOURCE_DIR
-        fs::path libRoot = fs::path(SWIQ_SOURCE_DIR) / "libraries";
+        fs::path libRoot = fs::path(SWIQ_SOURCE_DIR) / "public_apis";
         candidates.push_back(libRoot / requested);
         candidates.push_back(libRoot / (requested.string() + ".swiq"));
 #endif
