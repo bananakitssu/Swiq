@@ -1004,7 +1004,7 @@ stop 0;
 
 ### Library imports
 
-Swiq libraries can live in the bundled `libraries/` directory and can be imported with:
+Swiq libraries can live in the bundled `public_apis/` directory and can be imported with:
 
 ```swiq
 @import "Swiq/mathlib";
