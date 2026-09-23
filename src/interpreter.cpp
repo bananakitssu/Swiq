@@ -838,7 +838,7 @@ Value Interpreter::evaluate(const Expr* expr) {
 	    }
 	}
 
-        } else if (mcall->method == "Split") {
+        else if (mcall->method == "Split") {
             if (mcall->args.size() != 1) throw std::runtime_error("Interpreter error at line " + std::to_string(mcall->line) +
                                                                    ": Split() expects exactly 1 argument (delimiter)");
             auto strObj = std::get_if<std::string>(&obj.data);
