@@ -886,6 +886,14 @@ Value Interpreter::evaluate(const Expr* expr) {
     }
 
     if (auto var = dynamic_cast<const VariableExpr*>(expr)) {
+        // Swiq is the built-in namespace root. It is also displayable so
+        // private API scripts can use log(Swiq); without declaring it.
+        // Member access such as Swiq.__ENV__.__VERSION__.__BUILD_NUMBER__
+        // is handled below by the static environment lookup.
+        if (var->name == "Swiq") {
+            return Value(std::string("Swiq"));
+        }
+
         if (archived_variables.find(var->name) != archived_variables.end()) {
             throw std::runtime_error("Interpreter error at line " + std::to_string(var->line) +
                                       ": the variable '" + var->name + "' is archived, Use 'restore' to unarchive it");
