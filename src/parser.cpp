@@ -2,8 +2,13 @@
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
+#include <filesystem>
+#include <unordered_set>
 
-Parser::Parser(std::vector<Token> tokens) : tokens(std::move(tokens)) {}
+Parser::Parser(std::vector<Token> tokens, std::string baseDir, std::shared_ptr<std::unordered_set<std::string>> importStack)
+    : tokens(std::move(tokens)), baseDir(std::move(baseDir)), importStack(std::move(importStack)) {
+    if (!this->importStack) this->importStack = std::make_shared<std::unordered_set<std::string>>();
+}
 
 Token Parser::current() const {
     return tokens[pos];
@@ -63,24 +68,86 @@ void Parser::parseImportAndAppend(std::vector<std::unique_ptr<Stmt>>& target) {
     Token pathTok = expect(TokenType::STRING, "expected a file path string after '@import'");
     expect(TokenType::SEMICOLON, "expected ';'");
 
-    std::ifstream file(pathTok.value);
-    if (!file) {
+    namespace fs = std::filesystem;
+    fs::path requested(pathTok.value);
+    fs::path resolved;
+    std::vector<fs::path> candidates;
+
+    if (requested.is_absolute()) candidates.push_back(requested);
+    else {
+        candidates.push_back(fs::path(baseDir) / requested);
+        candidates.push_back(fs::current_path() / requested);
+    }
+
+    // Bundled public API imports: @import "Swiq/name";, "Swiq:name", or a bare
+    // API name. The .swiq extension is optional.
+    const std::string prefixes[] = {"Swiq/", "Swiq:", "@Swiq/"};
+    for (const auto& prefix : prefixes) {
+        if (std::string(pathTok.value).rfind(prefix, 0) == 0) {
+#ifdef SWIQ_SOURCE_DIR
+            fs::path libName(pathTok.value.substr(prefix.size()));
+            fs::path libRoot = fs::path(SWIQ_SOURCE_DIR) / "public_apis";
+            candidates.push_back(libRoot / libName);
+            candidates.push_back(libRoot / (libName.string() + ".swiq"));
+#endif
+            break;
+        }
+    }
+    if (!requested.has_parent_path() && requested.extension() != ".swiq") {
+#ifdef SWIQ_SOURCE_DIR
+        fs::path libRoot = fs::path(SWIQ_SOURCE_DIR) / "public_apis";
+        candidates.push_back(libRoot / requested);
+        candidates.push_back(libRoot / (requested.string() + ".swiq"));
+#endif
+    }
+
+    for (const auto& candidate : candidates) {
+        if (fs::is_regular_file(candidate)) {
+            resolved = fs::weakly_canonical(candidate);
+            break;
+        }
+        if (candidate.extension() != ".swiq" &&
+            fs::is_regular_file(candidate.string() + ".swiq")) {
+            resolved = fs::weakly_canonical(candidate.string() + ".swiq");
+            break;
+        }
+    }
+    if (resolved.empty()) {
         throw std::runtime_error("Parse error at line " + std::to_string(pathTok.line) +
-                                  ": could not open imported file '" + pathTok.value + "'");
+                                  ": could not find imported file '" + pathTok.value + "'");
+    }
+
+    const std::string canonical = resolved.string();
+    if (importStack->count(canonical)) {
+        throw std::runtime_error("Parse error at line " + std::to_string(pathTok.line) +
+                                  ": circular import detected for '" + canonical + "'");
+    }
+    importStack->insert(canonical);
+
+    std::ifstream file(resolved);
+    if (!file) {
+        importStack->erase(canonical);
+        throw std::runtime_error("Parse error at line " + std::to_string(pathTok.line) +
+                                  ": could not open imported file '" + canonical + "'");
     }
     std::stringstream buffer;
     buffer << file.rdbuf();
 
     Lexer importLexer(buffer.str());
     std::vector<Token> importTokens = importLexer.tokenize();
-    Parser importParser(importTokens);
-    std::vector<std::unique_ptr<Stmt>> importedStatements = importParser.parse(); // handles nested @imports too
+    Parser importParser(importTokens, resolved.parent_path().string(), importStack);
+    std::vector<std::unique_ptr<Stmt>> importedStatements;
+    try {
+        importedStatements = importParser.parse();
+    } catch (...) {
+        importStack->erase(canonical);
+        throw;
+    }
+    importStack->erase(canonical);
 
     for (auto& stmt : importedStatements) {
         if (auto varDecl = dynamic_cast<VarDeclStmt*>(stmt.get())) {
-            if (varDecl->isLocal) {
-                continue; 
-            }
+            if (varDecl->isLocal) continue;
         }
         target.push_back(std::move(stmt));
     }
@@ -155,6 +222,9 @@ std::unique_ptr<Stmt> Parser::parseStatement() {
     
     if (check(TokenType::DESTROY)) {
         return parseDestroyStmt();
+    }
+    if (check(TokenType::IDENTIFIER) && current().value == "stop") {
+        return parseStopStmt();
     }
 
     // Generic expression used as a statement, e.g. push(arr, 5); or x.ConvertToNumber();
@@ -313,6 +383,13 @@ std::unique_ptr<Stmt> Parser::parseSwitcherStmt() {
     return std::make_unique<SwitcherStmt>(std::move(controlExpr), std::move(cases), startLine);
 }
 
+std::unique_ptr<Stmt> Parser::parseStopStmt() {
+    Token stopTok = expect(TokenType::IDENTIFIER, "expected 'stop'");
+    auto status = parseExpr();
+    expect(TokenType::SEMICOLON, "expected ';'");
+    return std::make_unique<StopStmt>(std::move(status), stopTok.line);
+}
+
 std::unique_ptr<Stmt> Parser::parseDestroyStmt() {
     int line = current().line;
     advance();
@@ -324,9 +401,37 @@ std::unique_ptr<Stmt> Parser::parseDestroyStmt() {
 std::unique_ptr<Stmt> Parser::parseAssignNoSemicolon() {
     Token setTok = expect(TokenType::SET, "expected 'set'");
     Token name = expect(TokenType::IDENTIFIER, "expected variable name");
-    expect(TokenType::EQUALS, "expected '='");
-    auto value = parseExpr();
     int assign_type = 0;
+    std::unique_ptr<Expr> value = nullptr;
+
+    if (check(TokenType::PLUS)) {
+        advance();
+        if (check(TokenType::PLUS)) {
+            advance();
+            assign_type = 1;
+        } else if (check(TokenType::EQUALS)) {
+            advance();
+            assign_type = 2;
+            value = parseExpr();
+        } else {
+            throw std::runtime_error("Parser error at line " + std::to_string(current().line) + ": expected '=' or '+' after '+'");
+        }
+    } else if (check(TokenType::MINUS)) {
+        advance();
+        if (check(TokenType::MINUS)) {
+            advance();
+            assign_type = 3;
+        } else if (check(TokenType::EQUALS)) {
+            advance();
+            assign_type = 4;
+            value = parseExpr();
+        } else {
+            throw std::runtime_error("Parser error at line " + std::to_string(current().line) + ": expected '=' or '-' after '-'");
+        }
+    } else {
+        expect(TokenType::EQUALS, "expected '='");
+        value = parseExpr();
+    }
     return std::make_unique<AssignStmt>(name.value, std::move(value), setTok.line, assign_type);
 }
 
@@ -419,10 +524,12 @@ std::unique_ptr<Stmt> Parser::parseForStmt() {
     expect(TokenType::LPAREN, "expected '('");
 
     std::unique_ptr<Stmt> init;
-    if (peekAt(1).type == TokenType::VAR) {
-        init = parseVarDecl(); // consumes its own ';'
+    if (peekAt(1).type == TokenType::VAR ||
+        peekAt(1).type == TokenType::LOCAL ||
+        peekAt(1).type == TokenType::GLOBAL) {
+        init = parseVarDecl();
     } else {
-        init = parseAssign();  // consumes its own ';'
+        init = parseAssign();
     }
 
     auto condition = parseExpr();
@@ -583,7 +690,27 @@ std::vector<std::unique_ptr<Stmt>> Parser::parseBlock() {
 }
 
 std::unique_ptr<Expr> Parser::parseExpr() {
-    return parseEquality();
+    return parseLogicalOr();
+}
+
+std::unique_ptr<Expr> Parser::parseLogicalOr() {
+    auto left = parseLogicalAnd();
+    while (check(TokenType::OR)) {
+        Token opTok = advance();
+        auto right = parseLogicalAnd();
+        left = std::make_unique<BinaryExpr>(std::move(left), opTok.value, std::move(right), opTok.line);
+    }
+    return left;
+}
+
+std::unique_ptr<Expr> Parser::parseLogicalAnd() {
+    auto left = parseEquality();
+    while (check(TokenType::AND)) {
+        Token opTok = advance();
+        auto right = parseEquality();
+        left = std::make_unique<BinaryExpr>(std::move(left), opTok.value, std::move(right), opTok.line);
+    }
+    return left;
 }
 
 std::unique_ptr<Expr> Parser::parseEquality() {

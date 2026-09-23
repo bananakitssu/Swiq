@@ -3,16 +3,20 @@
 #include "ast.h"
 #include <vector>
 #include <memory>
+#include <string>
+#include <unordered_set>
 
 class Parser {
 public:
-    explicit Parser(std::vector<Token> tokens);
+    explicit Parser(std::vector<Token> tokens, std::string baseDir = ".", std::shared_ptr<std::unordered_set<std::string>> importStack = nullptr);
 
     std::vector<std::unique_ptr<Stmt>> parse();
 
 private:
     std::vector<Token> tokens;
     size_t pos = 0;
+    std::string baseDir;
+    std::shared_ptr<std::unordered_set<std::string>> importStack;
 
     Token current() const;
     Token peekAt(int offset) const;
@@ -38,6 +42,7 @@ private:
     std::unique_ptr<Stmt> parseTryStmt();
     std::unique_ptr<Stmt> parseSwitcherStmt();
     std::unique_ptr<Stmt> parseDestroyStmt();
+    std::unique_ptr<Stmt> parseStopStmt();
     std::unique_ptr<Stmt> parseTypeDecl(bool isInterface); // set type T = {...}; / set interface R = {...};
     std::unique_ptr<Stmt> parseResetStmt();
     TypeField parseTypeField(); // one "name: BaseType<modifier> = default" entry
@@ -45,6 +50,8 @@ private:
     std::vector<std::unique_ptr<Stmt>> parseBlock();
 
     std::unique_ptr<Expr> parseExpr();
+    std::unique_ptr<Expr> parseLogicalOr();
+    std::unique_ptr<Expr> parseLogicalAnd();
     std::unique_ptr<Expr> parseEquality();
     std::unique_ptr<Expr> parseComparison();
     std::unique_ptr<Expr> parseAdditive();

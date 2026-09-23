@@ -965,6 +965,55 @@ Output:
 
 ---
 
+## v1 completion additions
+
+### Logical conditions
+
+Conditions support short-circuit `&&` and `||`:
+
+```swiq
+if (x > 0 && x < 10) {
+  log("inside range");
+}
+```
+
+### String splitting
+
+Use `.Split(delimiter)` to split a string into an array:
+
+```swiq
+set var parts = "a,b,c".Split(",");
+log(parts);
+```
+
+### Waiting
+
+Use `wait(seconds)` to pause execution:
+
+```swiq
+wait(1);
+```
+
+### Stopping
+
+Use `stop <status>;` to terminate the program with a process status code:
+
+```swiq
+stop 0;
+```
+
+### Library imports
+
+Swiq libraries can live in the bundled `public_apis/` directory and can be imported with:
+
+```swiq
+@import "Swiq/mathlib";
+```
+
+Relative imports are resolved from the file doing the import, and circular imports are rejected.
+
+---
+
 ## Comments
 
 Now let's see how to make **comments** in Swiq
@@ -994,5 +1043,5 @@ Example 2:
 
 ---
 
-> [!IMPORTANT]
-> * You cannot have nested functions (a function in a function, will be a feature soon)
+> [!NOTE]
+> * Nested functions are supported in v1. Function declarations inside a function are scoped to that function call.

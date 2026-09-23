@@ -194,7 +194,16 @@ std::vector<Token> Lexer::tokenize() {
                 case '[': tok = {TokenType::LBRACKET, "["}; advance(); break;
                 case ']': tok = {TokenType::RBRACKET, "]"}; advance(); break;
                 case ';': tok = {TokenType::SEMICOLON, ";"}; advance(); break;
-		case '&': tok = {TokenType::AND, "&"}; advance(); break;
+		case '&':
+                    advance();
+                    if (current() == '&') { advance(); tok = {TokenType::AND, "&&"}; }
+                    else { continue; }
+                    break;
+                case '|':
+                    advance();
+                    if (current() == '|') { advance(); tok = {TokenType::OR, "||"}; }
+                    else { continue; }
+                    break;
                 default:
                     advance();
                     continue;
