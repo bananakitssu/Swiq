@@ -29,10 +29,9 @@ The syntax is similar to these languages:
 
 # Changelog
 
-No published releases
+## v1.0
 
-> [!IMPORTANT]
-> Swiq is still under-development.
+First version latest release
 
 ---
 
